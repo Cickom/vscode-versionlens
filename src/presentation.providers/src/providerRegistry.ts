@@ -51,13 +51,16 @@ class ProviderRegistry {
   getByFileName(fileName: string): Array<AbstractVersionLensProvider<IProviderConfig>> {
     const path = require('path');
     const filename = path.basename(fileName);
-    const filtered = this.providerNames
-      .map(name => this.providers[name])
-      .filter(provider => matchesFilename(
-        filename,
-        provider.config.options.selector.pattern
-      ));
 
+    const providers = this.providerNames
+      .map(name => this.providers[name])
+      .filter(provider => provider !== undefined);
+
+    if (providers.length === 0) return [];
+
+    const filtered = providers.filter(
+      provider => matchesFilename(filename, provider.config.options.selector.pattern)
+    );
     if (filtered.length === 0) return [];
 
     return filtered;
@@ -79,26 +82,28 @@ class ProviderRegistry {
 export const providerRegistry = new ProviderRegistry();
 
 export async function registerProviders(
-  extension: VersionLensExtension, appLogger: ILogger
-): Promise<Array<VsCodeTypes.Disposable>> {
+  extension: VersionLensExtension,
+  subscriptions: Array<VsCodeTypes.Disposable>,
+  logger: ILogger
+): Promise<void> {
 
   const { languages: { registerCodeLensProvider } } = require('vscode');
 
   const providerNames = providerRegistry.providerNames;
 
-  appLogger.debug('Registering providers %o', providerNames.join(', '));
+  logger.debug('Registering providers %o', providerNames.join(', '));
 
   const promisedActivation = providerNames.map(packageManager => {
     return import(`infrastructure.providers/${packageManager}/index`)
       .then(module => {
-        appLogger.debug('Activating package manager %s', packageManager);
+        logger.debug('Activating package manager %s', packageManager);
 
         const provider = module.activate(
           extension,
-          appLogger.child({ namespace: packageManager })
+          logger.child({ namespace: packageManager })
         );
 
-        appLogger.debug(
+        logger.debug(
           'Activated package provider for %s:\n file pattern: %s\n caching: %s minutes\n strict ssl: %s\n',
           packageManager,
           provider.config.options.selector.pattern,
@@ -109,13 +114,17 @@ export async function registerProviders(
         return providerRegistry.register(provider);
       })
       .then(provider => {
-        return registerCodeLensProvider(
+        // register the command with vscode
+        const sub = registerCodeLensProvider(
           provider.config.options.selector,
           provider
         );
+
+        // give vscode the command disposable
+        subscriptions.push(sub);
       })
       .catch(error => {
-        appLogger.error(
+        logger.error(
           'Could not register package manager %s. Reason: %O',
           packageManager,
           error,
@@ -123,7 +132,8 @@ export async function registerProviders(
       });
   });
 
-  return Promise.all(promisedActivation);
+  // invoke the promises
+  Promise.all(promisedActivation);
 }
 
 function matchesFilename(filename: string, pattern: string): boolean {

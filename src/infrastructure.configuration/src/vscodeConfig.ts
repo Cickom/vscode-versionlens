@@ -9,8 +9,8 @@ export class VsCodeConfig implements IFrozenRepository {
 
   section: string;
 
-  constructor(section: string) {
-    this.section = section;
+  constructor(extensionName: string) {
+    this.section = extensionName;
     this.frozen = null;
   }
 

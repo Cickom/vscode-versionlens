@@ -63,15 +63,19 @@ export class SuggestionCommands {
 }
 
 export function registerSuggestionCommands(
-  extension: VersionLensExtension, logger: ILogger
-): Array<VsCodeTypes.Disposable> {
+  extension: VersionLensExtension,
+  subscriptions: Array<VsCodeTypes.Disposable>,
+  logger: ILogger
+): void {
 
   const suggestionCommands = new SuggestionCommands(extension, logger);
 
-  return CommandHelpers.registerCommands(
-    SuggestionCommandContributions,
-    <any>suggestionCommands,
-    logger
+  subscriptions.push(
+    ...CommandHelpers.registerCommands(
+      SuggestionCommandContributions,
+      <any>suggestionCommands,
+      logger
+    )
   );
 
 }

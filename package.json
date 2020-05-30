@@ -61,6 +61,7 @@
   "dependencies": {
     "@npmcli/promise-spawn": "1.2.0",
     "systemjs": "0.21.6",
+    "awilix": "4.2.6",
     "npm-package-arg": "8.0.1",
     "libnpmconfig": "1.2.1",
     "pacote": "9.5.12",

@@ -41,16 +41,22 @@ export class VersionLensExtension {
 
   outputChannel: VsCodeTypes.OutputChannel;
 
-  constructor(config: IFrozenRepository, outputChannel: VsCodeTypes.OutputChannel) {
-    this.config = config;
+  constructor(
+    rootConfig: IFrozenRepository,
+    outputChannel: VsCodeTypes.OutputChannel,
+    loggingOptions: LoggingOptions,
+    httpOptions: HttpOptions,
+    cachingOptions: CachingOptions,
+  ) {
+    this.config = rootConfig;
 
     // instantiate contrib options
-    this.logging = new LoggingOptions(config, 'logging');
-    this.caching = new CachingOptions(config, 'caching');
-    this.http = new HttpOptions(config, 'http');
+    this.logging = loggingOptions;
+    this.caching = cachingOptions;
+    this.http = httpOptions;
 
-    this.suggestions = new SuggestionsOptions(config);
-    this.statuses = new StatusesOptions(config);
+    this.suggestions = new SuggestionsOptions(rootConfig);
+    this.statuses = new StatusesOptions(rootConfig);
 
     // instantiate setContext options
     this.state = new VersionLensState(this);
@@ -58,14 +64,4 @@ export class VersionLensExtension {
     this.outputChannel = outputChannel;
   }
 
-}
-
-let _extensionSingleton = null;
-export default _extensionSingleton;
-
-export function registerExtension(
-  config: IFrozenRepository, outputChannel: VsCodeTypes.OutputChannel
-): VersionLensExtension {
-  _extensionSingleton = new VersionLensExtension(config, outputChannel);
-  return _extensionSingleton;
 }

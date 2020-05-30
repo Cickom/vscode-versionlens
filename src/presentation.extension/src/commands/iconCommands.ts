@@ -89,14 +89,19 @@ export class IconCommands {
 }
 
 export function registerIconCommands(
-  extension: VersionLensExtension, logger: ILogger
-): Array<VsCodeTypes.Disposable> {
+  extension: VersionLensExtension,
+  subscriptions: Array<VsCodeTypes.Disposable>,
+  logger: ILogger
+): void {
 
   const iconCommands = new IconCommands(extension);
 
-  return CommandHelpers.registerCommands(
-    IconCommandContributions,
-    <any>iconCommands,
-    logger
-  );
+  subscriptions.push(
+    ...CommandHelpers.registerCommands(
+      IconCommandContributions,
+      <any>iconCommands,
+      logger
+    )
+  )
+
 }
