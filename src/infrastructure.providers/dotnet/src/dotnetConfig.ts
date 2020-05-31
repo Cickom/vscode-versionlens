@@ -1,9 +1,4 @@
-import {
-  CachingOptions,
-  ICachingOptions,
-  IHttpOptions,
-  HttpOptions
-} from 'core.clients';
+import { ICachingOptions, IHttpOptions } from 'core.clients';
 
 import { VersionLensExtension } from 'presentation.extension';
 import {
@@ -13,14 +8,7 @@ import {
 } from 'presentation.providers';
 
 import { NugetOptions } from './options/nugetOptions';
-
-export enum DotnetContributions {
-  Caching = 'dotnet.caching',
-  Http = 'dotnet.http',
-  Nuget = 'dotnet.nuget',
-  DependencyProperties = 'dotnet.dependencyProperties',
-  TagFilter = 'dotnet.tagFilter',
-}
+import { DotNetContributions } from './definitions/eDotNetContributions';
 
 export class DotNetConfig extends AbstractProviderConfig {
 
@@ -43,30 +31,25 @@ export class DotNetConfig extends AbstractProviderConfig {
 
   nuget: NugetOptions;
 
-  constructor(extension: VersionLensExtension) {
+  constructor(
+    extension: VersionLensExtension,
+    dotnetCachingOptions: ICachingOptions,
+    dotnetHttpOptions: IHttpOptions,
+    nugetOptions: NugetOptions,
+  ) {
     super(extension);
 
-    this.caching = new CachingOptions(
-      extension.config,
-      DotnetContributions.Caching,
-      'caching'
-    );
-
-    this.http = new HttpOptions(
-      extension.config,
-      DotnetContributions.Http,
-      'http'
-    );
-
-    this.nuget = new NugetOptions(extension.config, DotnetContributions.Nuget);
+    this.caching = dotnetCachingOptions;
+    this.http = dotnetHttpOptions;
+    this.nuget = nugetOptions;
   }
 
   get dependencyProperties(): Array<string> {
-    return this.extension.config.get(DotnetContributions.DependencyProperties);
+    return this.extension.config.get(DotNetContributions.DependencyProperties);
   }
 
   get tagFilter(): Array<string> {
-    return this.extension.config.get(DotnetContributions.TagFilter);
+    return this.extension.config.get(DotNetContributions.TagFilter);
   }
 
   get fallbackNugetSource(): string {

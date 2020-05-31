@@ -27,9 +27,9 @@ export class ComposerClient extends JsonHttpClientRequest
 
   config: ComposerConfig;
 
-  constructor(config: ComposerConfig, options: HttpRequestOptions, logger: ILogger) {
+  constructor(composerConfig: ComposerConfig, options: HttpRequestOptions, logger: ILogger) {
     super(logger, options)
-    this.config = config;
+    this.config = composerConfig;
   }
 
   async fetchPackage<TClientData>(request: PackageRequest<TClientData>): Promise<PackageDocument> {

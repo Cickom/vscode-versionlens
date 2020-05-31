@@ -14,8 +14,8 @@ import { JspmConfig } from './jspmConfig';
 
 export class JspmVersionLensProvider extends NpmVersionLensProvider {
 
-  constructor(config: JspmConfig, logger: ILogger) {
-    super(config, logger);
+  constructor(jspmConfig: JspmConfig, jspmLogger: ILogger) {
+    super(jspmConfig, jspmLogger);
   }
 
   async fetchVersionLenses(

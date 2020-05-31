@@ -2,15 +2,19 @@
 import * as VsCodeTypes from 'vscode';
 
 // compiled run-time references
+import { ILogger, LoggingOptions } from 'core.logging';
+import { HttpOptions, CachingOptions } from 'core.clients';
+
 import { VsCodeConfig } from 'infrastructure.configuration';
+
 import {
   VersionLensExtension,
   VersionLensState,
   TextEditorEvents
 } from 'presentation.extension';
-import { ILogger, LoggingOptions } from 'core.logging';
-import { HttpOptions, CachingOptions } from 'core.clients';
+import { ProviderRegistry } from 'presentation.providers';
 
+// application container map
 export interface IContainerMap {
 
   subscriptions: Array<VsCodeTypes.Disposable>,
@@ -34,4 +38,7 @@ export interface IContainerMap {
   // events
   textEditorEvents: TextEditorEvents,
   // textDocumentEvents: TextDocumentEvents,
+
+  // providers
+  providerRegistry: ProviderRegistry
 }

@@ -1,6 +1,7 @@
 // vscode references
 import * as VsCodeTypes from 'vscode';
 
+// imports
 import { ILogger } from 'core.logging';
 import {
   extractPackageDependenciesFromJson,
@@ -8,7 +9,6 @@ import {
   RequestFactory
 } from 'core.packages';
 
-// imports
 import {
   AbstractVersionLensProvider,
   VersionLensFetchResponse
@@ -18,15 +18,14 @@ import { NpmConfig } from './npmConfig';
 import { npmReplaceVersion } from './npmUtils';
 import { NpmPackageClient } from './clients/npmPackageClient';
 
-export class NpmVersionLensProvider
-  extends AbstractVersionLensProvider<NpmConfig> {
+export class NpmVersionLensProvider extends AbstractVersionLensProvider<NpmConfig> {
 
   packageClient: IPackageClient<null>;
 
-  constructor(config: NpmConfig, logger: ILogger) {
-    super(config, logger);
+  constructor(npmConfig: NpmConfig, npmLogger: ILogger) {
+    super(npmConfig, npmLogger);
 
-    this.packageClient = new NpmPackageClient(config, logger);
+    this.packageClient = new NpmPackageClient(npmConfig, npmLogger);
 
     this.customReplaceFn = npmReplaceVersion;
   }
@@ -67,6 +66,5 @@ export class NpmVersionLensProvider
   async updateOutdated(packagePath: string): Promise<any> {
 
   }
-
 
 } // End NpmCodeLensProvider

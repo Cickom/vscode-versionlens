@@ -1,24 +1,11 @@
-import {
-  ICachingOptions,
-  CachingOptions,
-  IHttpOptions,
-  HttpOptions
-} from 'core.clients';
+import { ICachingOptions, IHttpOptions } from 'core.clients';
 import { VersionLensExtension } from 'presentation.extension';
 import {
   ProviderSupport,
   IProviderOptions,
   AbstractProviderConfig
 } from 'presentation.providers';
-
-enum MavenContributions {
-  Caching = 'maven.caching',
-  Http = 'maven.http',
-
-  DependencyProperties = 'maven.dependencyProperties',
-  TagFilter = 'maven.tagFilter',
-  ApiUrl = 'maven.apiUrl',
-}
+import { MavenContributions } from './definitions/eMavenContributions';
 
 export class MavenConfig extends AbstractProviderConfig {
 
@@ -39,20 +26,15 @@ export class MavenConfig extends AbstractProviderConfig {
 
   http: IHttpOptions;
 
-  constructor(extension: VersionLensExtension) {
+  constructor(
+    extension: VersionLensExtension,
+    mavenCachingOptions: ICachingOptions,
+    mavenHttpOptions: IHttpOptions
+  ) {
     super(extension);
 
-    this.caching = new CachingOptions(
-      extension.config,
-      MavenContributions.Caching,
-      'caching'
-    );
-
-    this.http = new HttpOptions(
-      extension.config,
-      MavenContributions.Http,
-      'http'
-    );
+    this.caching = mavenCachingOptions;
+    this.http = mavenHttpOptions;
   }
 
   get dependencyProperties(): Array<string> {

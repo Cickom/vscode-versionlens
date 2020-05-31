@@ -22,28 +22,28 @@ export class DotNetVersionLensProvider
   nugetPackageClient: NuGetPackageClient;
   nugetResourceClient: NuGetResourceClient;
 
-  constructor(config: DotNetConfig, logger: ILogger) {
-    super(config, logger);
+  constructor(dotnetConfig: DotNetConfig, dotnetLogger: ILogger) {
+    super(dotnetConfig, dotnetLogger);
 
     this.dotnetClient = new DotNetClient(
-      config,
-      logger.child({ namespace: 'dotnet cli' })
+      dotnetConfig,
+      dotnetLogger.child({ namespace: 'dotnet cli' })
     );
 
     const requestOptions = {
-      caching: config.caching,
-      http: config.http
+      caching: dotnetConfig.caching,
+      http: dotnetConfig.http
     };
 
     this.nugetResourceClient = new NuGetResourceClient(
       requestOptions,
-      logger.child({ namespace: 'dotnet nuget client' })
+      dotnetLogger.child({ namespace: 'dotnet nuget client' })
     );
 
     this.nugetPackageClient = new NuGetPackageClient(
-      config,
+      dotnetConfig,
       requestOptions,
-      logger.child({ namespace: 'dotnet pkg client' })
+      dotnetLogger.child({ namespace: 'dotnet pkg client' })
     );
   }
 

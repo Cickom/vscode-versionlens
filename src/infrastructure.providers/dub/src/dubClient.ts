@@ -19,7 +19,7 @@ import {
 } from 'core.packages';
 
 import { JsonHttpClientRequest, } from 'infrastructure.clients';
-import { DubConfig } from '../dubConfig';
+import { DubConfig } from './dubConfig';
 
 export class DubClient extends JsonHttpClientRequest implements IPackageClient<null> {
 

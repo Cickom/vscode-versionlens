@@ -1,14 +1,8 @@
-// vscode references
-import * as VsCodeTypes from 'vscode';
-
 import { KeyDictionary } from 'core.generics'
-import { ILogger } from 'core.logging';
-
-import { VersionLensExtension } from 'presentation.extension';
 import { AbstractVersionLensProvider } from 'presentation.providers'
 import { IProviderConfig } from './definitions/iProviderConfig';
 
-class ProviderRegistry {
+export class ProviderRegistry {
 
   providers: KeyDictionary<AbstractVersionLensProvider<IProviderConfig>>;
 
@@ -77,63 +71,6 @@ class ProviderRegistry {
     return true;
   }
 
-}
-
-export const providerRegistry = new ProviderRegistry();
-
-export async function registerProviders(
-  extension: VersionLensExtension,
-  subscriptions: Array<VsCodeTypes.Disposable>,
-  logger: ILogger
-): Promise<void> {
-
-  const { languages: { registerCodeLensProvider } } = require('vscode');
-
-  const providerNames = providerRegistry.providerNames;
-
-  logger.debug('Registering providers %o', providerNames.join(', '));
-
-  const promisedActivation = providerNames.map(packageManager => {
-    return import(`infrastructure.providers/${packageManager}/index`)
-      .then(module => {
-        logger.debug('Activating package manager %s', packageManager);
-
-        const provider = module.activate(
-          extension,
-          logger.child({ namespace: packageManager })
-        );
-
-        logger.debug(
-          'Activated package provider for %s:\n file pattern: %s\n caching: %s minutes\n strict ssl: %s\n',
-          packageManager,
-          provider.config.options.selector.pattern,
-          provider.config.caching.duration,
-          provider.config.http.strictSSL,
-        );
-
-        return providerRegistry.register(provider);
-      })
-      .then(provider => {
-        // register the command with vscode
-        const sub = registerCodeLensProvider(
-          provider.config.options.selector,
-          provider
-        );
-
-        // give vscode the command disposable
-        subscriptions.push(sub);
-      })
-      .catch(error => {
-        logger.error(
-          'Could not register package manager %s. Reason: %O',
-          packageManager,
-          error,
-        );
-      });
-  });
-
-  // invoke the promises
-  Promise.all(promisedActivation);
 }
 
 function matchesFilename(filename: string, pattern: string): boolean {

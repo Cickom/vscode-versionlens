@@ -3,10 +3,17 @@ import * as VsCodeTypes from 'vscode';
 
 // imports
 import { ILogger } from 'core.logging';
-import { extractPackageDependenciesFromJson, VersionHelpers, RequestFactory } from 'core.packages';
+import {
+  extractPackageDependenciesFromJson,
+  VersionHelpers,
+  RequestFactory
+} from 'core.packages';
 
 import { VersionLens } from 'presentation.lenses';
-import { AbstractVersionLensProvider, VersionLensFetchResponse } from 'presentation.providers';
+import {
+  AbstractVersionLensProvider,
+  VersionLensFetchResponse
+} from 'presentation.providers';
 import {
   renderMissingDecoration,
   renderInstalledDecoration,
@@ -14,7 +21,7 @@ import {
 } from 'presentation.extension';
 
 import { DubConfig } from './dubConfig';
-import { readDubSelections, DubClient } from './clients/dubClient';
+import { readDubSelections, DubClient } from './dubClient';
 
 export class DubVersionLensProvider extends AbstractVersionLensProvider<DubConfig> {
 
@@ -22,19 +29,19 @@ export class DubVersionLensProvider extends AbstractVersionLensProvider<DubConfi
 
   dubClient: DubClient;
 
-  constructor(config: DubConfig, logger: ILogger) {
-    super(config, logger);
+  constructor(dubConfig: DubConfig, dubLogger: ILogger) {
+    super(dubConfig, dubLogger);
     this._outdatedCache = {};
 
     const requestOptions = {
-      caching: config.caching,
-      http: config.http
+      caching: dubConfig.caching,
+      http: dubConfig.http
     };
 
     this.dubClient = new DubClient(
-      config,
+      dubConfig,
       requestOptions,
-      logger.child({ namespace: 'dub pkg client' })
+      dubLogger.child({ namespace: 'dub pkg client' })
     );
   }
 

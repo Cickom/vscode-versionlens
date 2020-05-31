@@ -1,9 +1,6 @@
 import { IFrozenRepository, Nullable } from 'core.generics';
 import { OptionsWithFallback } from 'core.configuration';
-
-enum GitHubContributions {
-  AccessToken = 'accessToken',
-}
+import { GitHubContributions } from '../definitions/eGitHubContributions';
 
 export class GitHubOptions extends OptionsWithFallback {
 

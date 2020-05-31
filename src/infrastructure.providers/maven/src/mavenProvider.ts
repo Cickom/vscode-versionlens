@@ -8,9 +8,9 @@ import { RequestFactory } from 'core.packages';
 
 import { AbstractVersionLensProvider } from 'presentation.providers';
 
+import { MavenClientData } from './definitions/mavenClientData';
 import * as MavenXmlFactory from './mavenXmlParserFactory';
 import { MavenConfig } from './mavenConfig';
-import { MavenClientData } from './definitions/mavenClientData';
 import { MvnClient } from './clients/mvnClient';
 import { MavenClient } from './clients/mavenClient';
 
@@ -18,25 +18,26 @@ export class MavenVersionLensProvider
   extends AbstractVersionLensProvider<MavenConfig> {
 
   mvnClient: MvnClient;
+
   mavenClient: MavenClient;
 
-  constructor(config: MavenConfig, logger: ILogger) {
-    super(config, logger);
+  constructor(mavenConfig: MavenConfig, mavenLogger: ILogger) {
+    super(mavenConfig, mavenLogger);
 
     const requestOptions = {
-      caching: config.caching,
-      http: config.http
+      caching: mavenConfig.caching,
+      http: mavenConfig.http
     };
 
     this.mvnClient = new MvnClient(
-      config,
-      logger.child({ namespace: 'maven cli' })
+      mavenConfig,
+      mavenLogger.child({ namespace: 'maven cli' })
     );
 
     this.mavenClient = new MavenClient(
-      config,
+      mavenConfig,
       requestOptions,
-      logger.child({ namespace: 'maven pkg client' })
+      mavenLogger.child({ namespace: 'maven pkg client' })
     );
   }
 

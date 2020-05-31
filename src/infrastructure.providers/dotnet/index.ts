@@ -1,5 +1,3 @@
-export * from './src/activate'
-
 export * from './src/clients/dotnetClient'
 export * from './src/clients/nugetPackageClient'
 export * from './src/clients/nugetResourceClient'
@@ -13,3 +11,5 @@ export * from './src/dotnetUtils'
 export * from './src/dotnetXmlParserFactory'
 
 export * from './src/options/nugetOptions'
+
+export * from './src/dotnetRoot'
