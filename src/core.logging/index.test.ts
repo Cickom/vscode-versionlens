@@ -1,1 +1,1 @@
-export * from './test/mocks/loggerStub'
+export * from './test/stubs/loggerStub'

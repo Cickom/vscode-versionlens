@@ -65,8 +65,10 @@ export function registerSuggestionCommands(
   logger: ILogger
 ): void {
 
+  // create the dependency
   const suggestionCommands = new SuggestionCommands(extension, logger);
 
+  // register commands with vscode
   subscriptions.push(
     ...CommandHelpers.registerCommands(
       SuggestionCommandContributions,

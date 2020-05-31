@@ -21,7 +21,11 @@ import { ProviderRegistry } from 'presentation.providers';
 import { IContainerMap } from './container';
 
 // run-time file system imports
-const { window, languages: { registerCodeLensProvider } } = require('vscode');
+const {
+  workspace,
+  window,
+  languages: { registerCodeLensProvider }
+} = require('vscode');
 
 const {
   createContainer,
@@ -41,6 +45,9 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
 
     // container (only for composing complex deps)
     container: asFunction(() => container).singleton(),
+
+    // vscode abstractions
+    vscodeWorkspace: asValue(workspace),
 
     // maps to the vscode configuration
     rootConfig: asClass(VsCodeConfig).singleton(),
@@ -88,23 +95,25 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
   // start up stuff
   const { version } = require('../package.json');
 
-  const {
-    logger,
-    loggingOptions,
-    textEditorEvents,
-  } = container.cradle;
-
-  // log general start up info
-  logger.info('version: %s', version);
-  logger.info('log level: %s', loggingOptions.level);
-  logger.info('log path: %s', context.logPath);
-
   // invoke commands (todo move to extension class)
   container.resolve('iconCommands');
   container.resolve('suggestionCommands');
 
+  // add providers to the providerRegistry
   await registerProviders(container)
-    .then(_ => {
+    .then(() => {
+
+      const {
+        logger,
+        loggingOptions,
+        textEditorEvents,
+      } = container.cradle;
+
+      // log general start up info
+      logger.info('version: %s', version);
+      logger.info('log level: %s', loggingOptions.level);
+      logger.info('log path: %s', context.logPath);
+
       // show icons in active text editor if versionLens.providerActive
       textEditorEvents.onDidChangeActiveTextEditor(window.activeTextEditor);
     });

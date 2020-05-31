@@ -100,12 +100,14 @@ export function registerIconCommands(container: AwilixContainer<IContainerMap>):
     logger,
   } = container.cradle;
 
+  // create the dependency
   const iconCommands = new IconCommands(
     extension,
     outputChannel,
     providerRegistry
   );
 
+  // register commands with vscode
   subscriptions.push(
     ...CommandHelpers.registerCommands(
       IconCommandContributions,

@@ -7,13 +7,15 @@ import {
   UrlHelpers,
   HttpClientRequestMethods,
   HttpRequestOptions,
+  ICachingOptions,
+  IHttpOptions,
+  CachingOptions,
+  HttpOptions,
 } from 'core.clients'
 
-import {
-  HttpClientRequest,
-} from 'infrastructure.clients'
+import { HttpClientRequest } from 'infrastructure.clients'
 
-const { mock, instance } = require('ts-mockito');
+const { mock, instance, when } = require('ts-mockito');
 
 const assert = require('assert')
 const requireMock = require('mock-require')
@@ -21,6 +23,8 @@ const requireMock = require('mock-require')
 let requestLightMock = null
 let testContext = null
 
+let cachingOptsMock: ICachingOptions;
+let httpOptsMock: IHttpOptions;
 let loggerMock: ILogger;
 
 export const HttpRequestTests = {
@@ -36,13 +40,18 @@ export const HttpRequestTests = {
 
   beforeEach: () => {
 
+    cachingOptsMock = mock(CachingOptions);
+    httpOptsMock = mock(HttpOptions);
     loggerMock = mock(LoggerStub);
+
+    const caching = when(cachingOptsMock.duration).thenReturn(30000);
+    const http = when(httpOptsMock.strictSSL).thenReturn(true);
 
     testContext.rut = new HttpClientRequest(
       instance(loggerMock),
       <HttpRequestOptions>{
-        caching: { duration: 30000 },
-        http: { strictSSL: true }
+        caching,
+        http
       }
     );
 
@@ -65,18 +74,20 @@ export const HttpRequestTests = {
           return Promise.resolve({})
         };
 
+        const caching = when(cachingOptsMock.duration)
+          .thenReturn(test.testDuration);
+
+        const http = when(httpOptsMock.strictSSL)
+          .thenReturn(test.testStrictSSL);
+
         const rut = new HttpClientRequest(
           instance(loggerMock),
-          <HttpRequestOptions>{
-            caching: { duration: test.testDuration },
-            http: { strictSSL: test.testStrictSSL }
-          }
+          <HttpRequestOptions>{ caching, http }
         );
 
         await rut.request(
           HttpClientRequestMethods.get,
-          'anywhere',
-          {}
+          'anywhere'
         )
 
       })
@@ -93,8 +104,8 @@ export const HttpRequestTests = {
 
       await Promise.all(
 
-        testQueryParams.map(async function (params: KeyStringDictionary) {
-          const expectedUrl = UrlHelpers.createUrl(testUrl, params);
+        testQueryParams.map(async function (query: KeyStringDictionary) {
+          const expectedUrl = UrlHelpers.createUrl(testUrl, query);
           requestLightMock.xhr = options => {
             assert.equal(options.url, expectedUrl);
             assert.equal(options.type, HttpClientRequestMethods.get);
@@ -107,7 +118,7 @@ export const HttpRequestTests = {
           return await testContext.rut.request(
             HttpClientRequestMethods.get,
             testUrl,
-            params
+            query
           )
         })
       )

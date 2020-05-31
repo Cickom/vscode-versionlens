@@ -1,5 +1,7 @@
 import { IConfig, IFrozenOptions } from 'core.configuration';
 
+import { IVsCodeWorkspace } from './definitions/iVsCodeConfig';
+
 // allows vscode configuration to be defrosted
 // Useful for accessing hot changing values from settings.json
 // Stays frozen until defrost() is called and then refrosts
@@ -9,14 +11,16 @@ export class VsCodeConfig implements IFrozenOptions {
 
   section: string;
 
-  constructor(extensionName: string) {
+  workspace: IVsCodeWorkspace;
+
+  constructor(vscodeWorkspace: IVsCodeWorkspace, extensionName: string) {
+    this.workspace = vscodeWorkspace;
     this.section = extensionName;
     this.frozen = null;
   }
 
   protected get repo(): IConfig {
-    const { workspace } = require('vscode');
-    return workspace.getConfiguration(this.section);
+    return this.workspace.getConfiguration(this.section);
   }
 
   get<T>(key: string): T {
