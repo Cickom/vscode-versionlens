@@ -1,33 +1,50 @@
 import Fixtures from './fixtures/dotnetSources'
 
-import { DotNetConfig, DotNetClient } from 'infrastructure.providers/dotnet';
+import { LoggerStub } from 'test.core.logging';
 
-import { UrlHelpers } from 'core.clients';
+import { ILogger } from 'core.logging';
 
-import { LoggerMock } from 'infrastructure.testing';
+import {
+  UrlHelpers,
+  ICachingOptions,
+  CachingOptions,
+  IHttpOptions,
+  HttpOptions
+} from 'core.clients';
+
+import {
+  DotNetConfig,
+  DotNetClient,
+  INugetOptions,
+  NugetOptions
+} from 'infrastructure.providers/dotnet';
+
 import { VersionLensExtension } from 'presentation.extension';
 
-const assert = require('assert');
-const mock = require('mock-require');
 
-let defaultExtensionMock: VersionLensExtension;
+const { mock, instance, when } = require('ts-mockito');
+
+const assert = require('assert');
+const requireMock = require('mock-require');
+
+let extensionMock: VersionLensExtension;
+let cacheOptsMock: ICachingOptions;
+let httpOptsMock: IHttpOptions;
+let nugetOptsMock: INugetOptions;
+let loggerMock: ILogger;
 
 export const DotnetClientRequestTests = {
 
   beforeEach: () => {
-
-    defaultExtensionMock = new VersionLensExtension(
-      {
-        get: (k) => null,
-        defrost: () => null
-      },
-      null
-    );
-
+    extensionMock = mock(VersionLensExtension);
+    cacheOptsMock = mock(CachingOptions);
+    httpOptsMock = mock(HttpOptions);
+    nugetOptsMock = mock(NugetOptions);
+    loggerMock = mock(LoggerStub)
   },
 
   // reset all require mocks
-  afterEach: () => mock.stop('@npmcli/promise-spawn'),
+  afterEach: () => requireMock.stop('@npmcli/promise-spawn'),
 
   "fetchSources": {
 
@@ -69,20 +86,22 @@ export const DotnetClientRequestTests = {
           stdout: Fixtures.enabledSources
         });
       };
-      mock('@npmcli/promise-spawn', promiseSpawnMock);
+      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
+
+      when(nugetOptsMock.sources).thenReturn(testFeeds)
 
       // setup test feeds
       const config = new DotNetConfig(
-        new VersionLensExtension(
-          {
-            get: (k) => <any>testFeeds,
-            defrost: () => null
-          },
-          null
-        )
+        instance(extensionMock),
+        instance(cacheOptsMock),
+        instance(httpOptsMock),
+        instance(nugetOptsMock),
       )
 
-      const cut = new DotNetClient(config, new LoggerMock());
+      const cut = new DotNetClient(
+        config,
+        instance(loggerMock)
+      );
       return cut.fetchSources('.')
         .then(actualSources => {
           assert.deepEqual(actualSources, expected);
@@ -99,20 +118,22 @@ export const DotnetClientRequestTests = {
           stdout: Fixtures.disabledSource
         });
       };
-      mock('@npmcli/promise-spawn', promiseSpawnMock);
+      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
+
+      when(nugetOptsMock.sources).thenReturn(testFeeds)
 
       // setup test feeds
       const config = new DotNetConfig(
-        new VersionLensExtension(
-          {
-            get: (k) => <any>testFeeds,
-            defrost: () => null
-          },
-          null
-        )
+        instance(extensionMock),
+        instance(cacheOptsMock),
+        instance(httpOptsMock),
+        instance(nugetOptsMock),
       )
 
-      const cut = new DotNetClient(config, new LoggerMock());
+      const cut = new DotNetClient(
+        config,
+        instance(loggerMock)
+      );
       return cut.fetchSources('.')
         .then(actualSources => {
           assert.equal(actualSources.length, 0);
@@ -120,7 +141,6 @@ export const DotnetClientRequestTests = {
     },
 
     "returns only enabled sources when some sources are disabled": async () => {
-      const testFeeds = [];
       const expected = [
         {
           enabled: true,
@@ -136,20 +156,21 @@ export const DotnetClientRequestTests = {
           stdout: Fixtures.enabledAndDisabledSources
         });
       };
-      mock('@npmcli/promise-spawn', promiseSpawnMock);
+      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
 
       // setup test feeds
       const config = new DotNetConfig(
-        new VersionLensExtension(
-          {
-            get: (k) => <any>testFeeds,
-            defrost: () => null
-          },
-          null
-        )
+        instance(extensionMock),
+        instance(cacheOptsMock),
+        instance(httpOptsMock),
+        instance(nugetOptsMock),
       )
 
-      const cut = new DotNetClient(config, new LoggerMock());
+      const cut = new DotNetClient(
+        config,
+        instance(loggerMock)
+      );
+
       return cut.fetchSources('.')
         .then(actualSources => {
           assert.deepEqual(actualSources, expected);
@@ -164,12 +185,18 @@ export const DotnetClientRequestTests = {
           stdout: Fixtures.invalidSources
         });
       };
-      mock('@npmcli/promise-spawn', promiseSpawnMock);
+      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
 
-      const config = new DotNetConfig(defaultExtensionMock);
+      const config = new DotNetConfig(
+        instance(extensionMock),
+        instance(cacheOptsMock),
+        instance(httpOptsMock),
+        instance(nugetOptsMock),
+      );
+
       const cut = new DotNetClient(
         config,
-        new LoggerMock()
+        instance(loggerMock)
       );
 
       const expectedErrorResp = {
@@ -184,8 +211,6 @@ export const DotnetClientRequestTests = {
           assert.deepEqual(actual, [expectedErrorResp]);
         });
     },
-
-
 
   }
 

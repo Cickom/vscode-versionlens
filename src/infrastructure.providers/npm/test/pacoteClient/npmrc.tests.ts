@@ -1,18 +1,40 @@
-import { testPath, LoggerMock } from 'infrastructure.testing';
+import { testPath } from 'test.core.testing';
+import { LoggerStub } from 'test.core.logging';
+
+import { ILogger } from 'core.logging';
+
+import {
+  IHttpOptions,
+  ICachingOptions,
+  CachingOptions,
+  HttpOptions
+} from 'core.clients';
 
 import { VersionLensExtension } from 'presentation.extension';
 
-import { NpmConfig, PacoteClient } from 'infrastructure.providers/npm'
+import {
+  NpmConfig,
+  PacoteClient,
+  GitHubOptions
+} from 'infrastructure.providers/npm'
+
 import Fixtures from './pacoteClient.fixtures'
+
+const { mock, instance } = require('ts-mockito');
 
 const assert = require('assert')
 const path = require('path')
-const mock = require('mock-require')
+const requireMock = require('mock-require')
 const npa = require('npm-package-arg');
 const fs = require('fs');
 
 let pacoteMock = null
-let defaultExtensionMock: VersionLensExtension;
+
+let extensionMock: VersionLensExtension;
+let cacheOptsMock: ICachingOptions;
+let httpOptsMock: IHttpOptions;
+let githubOptsMock: GitHubOptions;
+let loggerMock: ILogger;
 
 export default {
 
@@ -21,22 +43,20 @@ export default {
       packument: {}
     }
 
-    mock('pacote', pacoteMock)
+    requireMock('pacote', pacoteMock)
   },
 
-  afterAll: () => mock.stopAll(),
+  afterAll: () => requireMock.stopAll(),
 
   beforeEach: () => {
     // mock defaults
     pacoteMock.packument = (npaResult, opts) => { }
 
-    defaultExtensionMock = new VersionLensExtension(
-      {
-        get: (k) => null,
-        defrost: () => null
-      },
-      null
-    );
+    extensionMock = mock(VersionLensExtension);
+    cacheOptsMock = mock(CachingOptions);
+    httpOptsMock = mock(HttpOptions);
+    githubOptsMock = mock(GitHubOptions);
+    loggerMock = mock(LoggerStub)
   },
 
   'fetchPackage': {
@@ -72,8 +92,13 @@ export default {
       }
 
       const cut = new PacoteClient(
-        new NpmConfig(defaultExtensionMock),
-        new LoggerMock()
+        new NpmConfig(
+          instance(extensionMock),
+          instance(cacheOptsMock),
+          instance(httpOptsMock),
+          instance(githubOptsMock),
+        ),
+        instance(loggerMock)
       );
 
       const npaSpec = npa.resolve(

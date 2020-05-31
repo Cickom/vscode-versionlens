@@ -1,5 +1,7 @@
-import { KeyStringDictionary } from 'core.generics'
+import { LoggerStub } from 'test.core.logging'
 
+import { ILogger } from 'core.logging';
+import { KeyStringDictionary } from 'core.generics'
 import {
   ClientResponseSource,
   UrlHelpers,
@@ -11,13 +13,15 @@ import {
   HttpClientRequest,
 } from 'infrastructure.clients'
 
-import { LoggerMock } from 'infrastructure.testing'
+const { mock, instance } = require('ts-mockito');
 
 const assert = require('assert')
-const mock = require('mock-require')
+const requireMock = require('mock-require')
 
 let requestLightMock = null
 let testContext = null
+
+let loggerMock: ILogger;
 
 export const HttpRequestTests = {
 
@@ -25,14 +29,17 @@ export const HttpRequestTests = {
     testContext = {}
     // mock require modules
     requestLightMock = {}
-    mock('request-light', requestLightMock)
+    requireMock('request-light', requestLightMock)
   },
 
-  afterAll: () => mock.stopAll(),
+  afterAll: () => requireMock.stopAll(),
 
   beforeEach: () => {
+
+    loggerMock = mock(LoggerStub);
+
     testContext.rut = new HttpClientRequest(
-      new LoggerMock(),
+      instance(loggerMock),
       <HttpRequestOptions>{
         caching: { duration: 30000 },
         http: { strictSSL: true }
@@ -59,7 +66,7 @@ export const HttpRequestTests = {
         };
 
         const rut = new HttpClientRequest(
-          new LoggerMock(),
+          instance(loggerMock),
           <HttpRequestOptions>{
             caching: { duration: test.testDuration },
             http: { strictSSL: test.testStrictSSL }
@@ -191,7 +198,7 @@ export const HttpRequestTests = {
       };
 
       testContext.rut = new HttpClientRequest(
-        new LoggerMock(),
+        instance(loggerMock),
         <HttpRequestOptions>{
           caching: { duration: 0 },
           http: { strictSSL: true }

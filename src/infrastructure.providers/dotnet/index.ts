@@ -4,6 +4,7 @@ export * from './src/clients/nugetResourceClient'
 
 export * from './src/definitions/dotnet'
 export * from './src/definitions/nuget'
+export * from './src/definitions/iNugetOptions'
 
 export * from './src/dotnetConfig'
 export * from './src/dotnetProvider'

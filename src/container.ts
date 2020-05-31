@@ -1,5 +1,6 @@
 // design-time references
 import * as VsCodeTypes from 'vscode';
+import { AwilixContainer } from 'awilix';
 
 // compiled run-time references
 import { ILogger, LoggingOptions } from 'core.logging';
@@ -10,15 +11,19 @@ import { VsCodeConfig } from 'infrastructure.configuration';
 import {
   VersionLensExtension,
   VersionLensState,
-  TextEditorEvents
+  TextEditorEvents,
+  IconCommands,
+  SuggestionCommands
 } from 'presentation.extension';
 import { ProviderRegistry } from 'presentation.providers';
 
 // application container map
 export interface IContainerMap {
 
-  subscriptions: Array<VsCodeTypes.Disposable>,
+  // container (only for composing complex deps)
+  container: AwilixContainer<IContainerMap>,
 
+  // configuration
   rootConfig: VsCodeConfig,
 
   // logging
@@ -35,9 +40,13 @@ export interface IContainerMap {
   extension: VersionLensExtension,
   extensionState: VersionLensState,
 
+  // commands
+  subscriptions: Array<VsCodeTypes.Disposable>,
+  iconCommands: IconCommands,
+  suggestionCommands: SuggestionCommands,
+
   // events
   textEditorEvents: TextEditorEvents,
-  // textDocumentEvents: TextDocumentEvents,
 
   // providers
   providerRegistry: ProviderRegistry

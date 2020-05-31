@@ -1,32 +1,48 @@
-import { NpmConfig, NpmPackageClient } from 'infrastructure.providers/npm'
-import { LoggerMock } from 'infrastructure.testing';
-import { VersionLensExtension } from 'presentation.extension';
-import { ClientResponseSource } from 'core.clients';
+import { LoggerStub } from 'test.core.logging';
+
+import { NpmConfig, NpmPackageClient, GitHubOptions } from 'infrastructure.providers/npm'
+
+import {
+  ClientResponseSource,
+  ICachingOptions,
+  CachingOptions,
+  IHttpOptions,
+  HttpOptions
+} from 'core.clients';
+
 import { PackageSuggestionFlags } from 'core.packages';
 
-const assert = require('assert')
-const mock = require('mock-require')
+import { VersionLensExtension } from 'presentation.extension';
 
-let defaultExtensionMock: VersionLensExtension;
+const { mock, instance } = require('ts-mockito');
+
+const assert = require('assert')
+const requireMock = require('mock-require')
+
 let requestLightMock = null
+
+let extensionMock: VersionLensExtension;
+let cacheOptsMock: ICachingOptions;
+let httpOptsMock: IHttpOptions;
+let githubOptsMock: GitHubOptions;
+let loggerMock: LoggerStub;
+
 export default {
 
   beforeAll: () => {
     // mock require modules
     requestLightMock = {}
-    mock('request-light', requestLightMock)
+    requireMock('request-light', requestLightMock)
   },
 
-  afterAll: () => mock.stopAll(),
+  afterAll: () => requireMock.stopAll(),
 
   beforeEach: () => {
-    defaultExtensionMock = new VersionLensExtension(
-      {
-        get: (k) => null,
-        defrost: () => null
-      },
-      null
-    );
+    extensionMock = mock(VersionLensExtension);
+    cacheOptsMock = mock(CachingOptions);
+    httpOptsMock = mock(HttpOptions);
+    githubOptsMock = mock(GitHubOptions);
+    loggerMock = mock(LoggerStub);
   },
 
   'fetchPackage': {
@@ -49,8 +65,13 @@ export default {
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(defaultExtensionMock),
-        new LoggerMock()
+        new NpmConfig(
+          instance(extensionMock),
+          instance(cacheOptsMock),
+          instance(httpOptsMock),
+          instance(githubOptsMock),
+        ),
+        instance(loggerMock)
       );
 
       return testStates.forEach(async testState => {

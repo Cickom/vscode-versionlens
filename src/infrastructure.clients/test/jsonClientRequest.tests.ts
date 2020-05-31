@@ -1,3 +1,6 @@
+import { LoggerStub } from 'test.core.logging'
+
+import { ILogger } from 'core.logging'
 import {
   ClientResponseSource,
   HttpClientRequestMethods,
@@ -5,25 +8,28 @@ import {
 } from 'core.clients'
 
 import { JsonHttpClientRequest } from 'infrastructure.clients'
-import { LoggerMock } from 'infrastructure.testing'
+
+const { mock, instance } = require('ts-mockito');
 
 const assert = require('assert')
-const mock = require('mock-require')
+const requireMock = require('mock-require')
 
 let requestLightMock = null
+let loggerMock: ILogger;
 
 export const JsonClientRequestTests = {
 
   beforeAll: () => {
     // mock require modules
     requestLightMock = {}
-    mock('request-light', requestLightMock)
+    requireMock('request-light', requestLightMock)
   },
 
-  afterAll: () => mock.stopAll(),
+  afterAll: () => requireMock.stopAll(),
 
   beforeEach: () => {
     requestLightMock.xhr = _ => { throw new Error("Not implemented") }
+    loggerMock = mock(LoggerStub);
   },
 
   "requestJson": {
@@ -48,7 +54,7 @@ export const JsonClientRequestTests = {
       };
 
       const rut = new JsonHttpClientRequest(
-        new LoggerMock(),
+        instance(loggerMock),
         <HttpRequestOptions>{
           caching: { duration: 30000 },
           http: { strictSSL: true }

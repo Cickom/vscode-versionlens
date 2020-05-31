@@ -1,36 +1,55 @@
-// import { testPath } from 'test/unit/utils';
-import { NpmConfig, NpmPackageClient } from 'infrastructure.providers/npm'
-import { githubFixtures } from './fetchGithub.fixtures'
-import { LoggerMock } from 'infrastructure.testing';
-import { VersionLensExtension } from 'presentation.extension';
-import { ClientResponseSource } from 'core.clients';
+import { LoggerStub } from 'test.core.logging';
+
 import { PackageSuggestionFlags } from 'core.packages';
+import { ILogger } from 'core.logging';
+
+import {
+  NpmConfig,
+  NpmPackageClient,
+  GitHubOptions
+} from 'infrastructure.providers/npm'
+
+import {
+  ICachingOptions,
+  CachingOptions,
+  IHttpOptions,
+  HttpOptions,
+  ClientResponseSource
+} from 'core.clients';
+
+import { VersionLensExtension } from 'presentation.extension';
+
+import { githubFixtures } from './fetchGithub.fixtures'
+
+const { mock, instance, when } = require('ts-mockito');
 
 const assert = require('assert')
-const mock = require('mock-require')
+const requireMock = require('mock-require')
 
-let defaultExtensionMock: VersionLensExtension;
-let configMock = null;
 let requestLightMock = null
+
+let extensionMock: VersionLensExtension;
+let cacheOptsMock: ICachingOptions;
+let httpOptsMock: IHttpOptions;
+let githubOptsMock: GitHubOptions;
+let loggerMock: ILogger;
 
 export default {
 
   beforeAll: () => {
     // mock require modules
     requestLightMock = {}
-    mock('request-light', requestLightMock)
+    requireMock('request-light', requestLightMock)
   },
 
-  afterAll: () => mock.stopAll(),
+  afterAll: () => requireMock.stopAll(),
 
   beforeEach: () => {
-
-    configMock = {
-      get: (k) => null,
-      defrost: () => null
-    }
-
-    defaultExtensionMock = new VersionLensExtension(configMock, null);
+    extensionMock = mock(VersionLensExtension);
+    cacheOptsMock = mock(CachingOptions);
+    httpOptsMock = mock(HttpOptions);
+    githubOptsMock = mock(GitHubOptions);
+    loggerMock = mock(LoggerStub);
   },
 
   'fetchGithubPackage': {
@@ -56,8 +75,13 @@ export default {
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(defaultExtensionMock),
-        new LoggerMock()
+        new NpmConfig(
+          instance(extensionMock),
+          instance(cacheOptsMock),
+          instance(httpOptsMock),
+          instance(githubOptsMock),
+        ),
+        instance(loggerMock)
       );
 
       return cut.fetchPackage(testRequest)
@@ -111,8 +135,13 @@ export default {
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(defaultExtensionMock),
-        new LoggerMock()
+        new NpmConfig(
+          instance(extensionMock),
+          instance(cacheOptsMock),
+          instance(httpOptsMock),
+          instance(githubOptsMock),
+        ),
+        instance(loggerMock)
       );
 
       return cut.fetchPackage(testRequest)
@@ -167,8 +196,13 @@ export default {
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(defaultExtensionMock),
-        new LoggerMock()
+        new NpmConfig(
+          instance(extensionMock),
+          instance(cacheOptsMock),
+          instance(httpOptsMock),
+          instance(githubOptsMock),
+        ),
+        instance(loggerMock)
       );
 
       return cut.fetchPackage(testRequest)
@@ -207,9 +241,6 @@ export default {
 
       const testToken = 'testToken';
 
-      configMock.get = k =>
-        k === 'npm.github.accessToken' ? testToken : null
-
       requestLightMock.xhr = options => {
         const actual = options.headers['authorization'];
         assert.equal(actual, 'token ' + testToken)
@@ -221,14 +252,20 @@ export default {
         })
       };
 
+      when(githubOptsMock.accessToken).thenReturn(testToken);
+
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(defaultExtensionMock),
-        new LoggerMock()
+        new NpmConfig(
+          instance(extensionMock),
+          instance(cacheOptsMock),
+          instance(httpOptsMock),
+          instance(githubOptsMock),
+        ),
+        instance(loggerMock)
       );
 
       return cut.fetchPackage(testRequest);
-
     }
 
   }

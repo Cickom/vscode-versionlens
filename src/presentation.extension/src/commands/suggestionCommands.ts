@@ -4,15 +4,12 @@ import * as VsCodeTypes from 'vscode';
 import { ILogger } from 'core.logging';
 import { PackageSourceTypes } from 'core.packages';
 
-import { VersionLensExtension } from "../versionLensExtension";
-import { VersionLensState } from '../versionLensState';
 import { VersionLens } from 'presentation.lenses';
 import { CommandHelpers } from 'presentation.extension';
 
-export enum SuggestionCommandContributions {
-  UpdateDependencyCommand = 'versionlens.onUpdateDependencyCommand',
-  LinkCommand = "versionlens.onLinkCommand"
-}
+import { VersionLensExtension } from "../versionLensExtension";
+import { VersionLensState } from '../versionLensState';
+import { SuggestionCommandContributions } from '../definitions/eSuggestionCommandContributions';
 
 export class SuggestionCommands {
 

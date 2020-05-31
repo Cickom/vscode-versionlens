@@ -1,11 +1,11 @@
-import { IFrozenRepository, Nullable } from 'core.generics';
-import { OptionsWithFallback } from 'core.configuration';
+import { Nullable } from 'core.generics';
+import { IFrozenOptions, OptionsWithFallback } from 'core.configuration';
 import { GitHubContributions } from '../definitions/eGitHubContributions';
 
 export class GitHubOptions extends OptionsWithFallback {
 
   constructor(
-    config: IFrozenRepository,
+    config: IFrozenOptions,
     section: string,
     fallbackSection: Nullable<string> = null
   ) {

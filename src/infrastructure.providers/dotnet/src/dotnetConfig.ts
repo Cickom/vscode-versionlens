@@ -7,7 +7,7 @@ import {
   AbstractProviderConfig
 } from 'presentation.providers';
 
-import { NugetOptions } from './options/nugetOptions';
+import { INugetOptions } from "./definitions/iNugetOptions";
 import { DotNetContributions } from './definitions/eDotNetContributions';
 
 export class DotNetConfig extends AbstractProviderConfig {
@@ -29,13 +29,13 @@ export class DotNetConfig extends AbstractProviderConfig {
 
   http: IHttpOptions;
 
-  nuget: NugetOptions;
+  nuget: INugetOptions;
 
   constructor(
     extension: VersionLensExtension,
     dotnetCachingOptions: ICachingOptions,
     dotnetHttpOptions: IHttpOptions,
-    nugetOptions: NugetOptions,
+    nugetOptions: INugetOptions,
   ) {
     super(extension);
 

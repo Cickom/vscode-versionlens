@@ -1,23 +1,17 @@
 // vscode references
 import * as VsCodeTypes from 'vscode';
+import { AwilixContainer } from 'awilix';
 
-import { ILogger } from 'core.logging';
 import { CommandHelpers } from 'presentation.extension';
-import { VersionLensExtension } from "../versionLensExtension";
-import * as InstalledStatusHelpers from '../helpers/installedStatusHelpers';
-import { VersionLensState } from '../versionLensState';
 import { ProviderRegistry } from 'presentation.providers';
 
-export enum IconCommandContributions {
-  ShowError = 'versionlens.onShowError',
-  ShowingProgress = 'versionlens.onShowingProgress',
-  ShowInstalledStatuses = 'versionlens.onShowInstalledStatuses',
-  HideInstalledStatuses = 'versionlens.onHideInstalledStatuses',
-  ShowPrereleaseVersions = 'versionlens.onShowPrereleaseVersions',
-  HidePrereleaseVersions = 'versionlens.onHidePrereleaseVersions',
-  ShowVersionLenses = 'versionlens.onShowVersionLenses',
-  HideVersionLenses = 'versionlens.onHideVersionLenses',
-}
+import { VersionLensExtension } from "../versionLensExtension";
+import { VersionLensState } from '../versionLensState';
+import * as InstalledStatusHelpers from '../helpers/installedStatusHelpers';
+
+import { IconCommandContributions } from '../definitions/eIconCommandContributions';
+
+import { IContainerMap } from '../../../container';
 
 export class IconCommands {
 
@@ -25,10 +19,17 @@ export class IconCommands {
 
   extension: VersionLensExtension;
 
+  outputChannel: VsCodeTypes.OutputChannel;
+
   providerRegistry: ProviderRegistry;
 
-  constructor(extension: VersionLensExtension, providerRegistry: ProviderRegistry) {
+  constructor(
+    extension: VersionLensExtension,
+    outputChannel: VsCodeTypes.OutputChannel,
+    providerRegistry: ProviderRegistry
+  ) {
     this.extension = extension
+    this.outputChannel = outputChannel;
     this.state = extension.state;
     this.providerRegistry = providerRegistry;
   }
@@ -39,7 +40,7 @@ export class IconCommands {
       this.state.providerBusy.change(0)
     ])
       .then(_ => {
-        this.extension.outputChannel.show();
+        this.outputChannel.show();
       });
   }
 
@@ -89,14 +90,21 @@ export class IconCommands {
 
 }
 
-export function registerIconCommands(
-  extension: VersionLensExtension,
-  providerRegistry: ProviderRegistry,
-  subscriptions: Array<VsCodeTypes.Disposable>,
-  logger: ILogger
-): IconCommands {
+export function registerIconCommands(container: AwilixContainer<IContainerMap>): IconCommands {
 
-  const iconCommands = new IconCommands(extension, providerRegistry);
+  const {
+    extension,
+    providerRegistry,
+    subscriptions,
+    outputChannel,
+    logger,
+  } = container.cradle;
+
+  const iconCommands = new IconCommands(
+    extension,
+    outputChannel,
+    providerRegistry
+  );
 
   subscriptions.push(
     ...CommandHelpers.registerCommands(

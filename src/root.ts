@@ -34,24 +34,36 @@ const {
 export async function composition(context: VsCodeTypes.ExtensionContext) {
 
   const container: AwilixContainer<IContainerMap> = createContainer({
-    injectionMode: InjectionMode.CLASSIC,
-  })
+    injectionMode: InjectionMode.CLASSIC
+  });
 
-  const containerMap = {
-    // used when un\registering commands
-    subscriptions: asValue(context.subscriptions),
+  const containerMap: IContainerMap = {
+
+    // container (only for composing complex deps)
+    container: asFunction(() => container).singleton(),
 
     // maps to the vscode configuration
     rootConfig: asClass(VsCodeConfig).singleton(),
 
     // logging
-    outputChannel: asFunction(extensionName => window.createOutputChannel(extensionName)).singleton(),
+    outputChannel: asFunction(
+      extensionName => window.createOutputChannel(extensionName)
+    ).singleton(),
+
     logger: asFunction(createLogger).singleton(),
 
     // logging options
-    loggingOptions: asFunction(rootConfig => new LoggingOptions(rootConfig, 'logging')).singleton(),
-    httpOptions: asFunction(rootConfig => new HttpOptions(rootConfig, 'http')).singleton(),
-    cachingOptions: asFunction(rootConfig => new CachingOptions(rootConfig, 'caching')).singleton(),
+    loggingOptions: asFunction(
+      rootConfig => new LoggingOptions(rootConfig, 'logging')
+    ).singleton(),
+
+    httpOptions: asFunction(
+      rootConfig => new HttpOptions(rootConfig, 'http')
+    ).singleton(),
+
+    cachingOptions: asFunction(
+      rootConfig => new CachingOptions(rootConfig, 'caching')
+    ).singleton(),
 
     // extension
     extensionName: asValue(VersionLensExtension.extensionName.toLowerCase()),
@@ -59,6 +71,7 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
     extensionState: asClass(VersionLensState).singleton(),
 
     // commands
+    subscriptions: asValue(context.subscriptions),
     iconCommands: asFunction(registerIconCommands).singleton(),
     suggestionCommands: asFunction(registerSuggestionCommands).singleton(),
 
@@ -70,20 +83,20 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
   };
 
   // register the map
-  container.register(containerMap);
+  container.register(<any>containerMap);
 
   // start up stuff
   const { version } = require('../package.json');
 
   const {
-    extension,
     logger,
+    loggingOptions,
     textEditorEvents,
   } = container.cradle;
 
   // log general start up info
   logger.info('version: %s', version);
-  logger.info('log level: %s', extension.logging.level);
+  logger.info('log level: %s', loggingOptions.level);
   logger.info('log path: %s', context.logPath);
 
   // invoke commands (todo move to extension class)
@@ -94,7 +107,7 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
     .then(_ => {
       // show icons in active text editor if versionLens.providerActive
       textEditorEvents.onDidChangeActiveTextEditor(window.activeTextEditor);
-    })
+    });
 
 }
 

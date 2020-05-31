@@ -1,14 +1,23 @@
-import { NpmPackageClient, NpmConfig } from 'infrastructure.providers/npm';
-import { LoggerMock } from 'infrastructure.testing';
+import { NpmPackageClient, NpmConfig, GitHubOptions } from 'infrastructure.providers/npm';
+import { LoggerStub } from 'test.core.logging';
 import { VersionLensExtension } from 'presentation.extension';
-import { ClientResponseSource } from 'core.clients';
+import { ClientResponseSource, ICachingOptions, IHttpOptions, CachingOptions, HttpOptions } from 'core.clients';
 import { PackageSuggestionFlags } from 'core.packages';
+import { ILogger } from 'core.logging';
+
+const { mock: Mock, instance } = require('ts-mockito');
 
 const assert = require('assert')
 const mock = require('mock-require')
 
-let defaultExtensionMock: VersionLensExtension;
+
 let requestLightMock = null
+
+let extensionMock: VersionLensExtension;
+let cacheOptsMock: ICachingOptions;
+let httpOptsMock: IHttpOptions;
+let githubOptsMock: GitHubOptions;
+let loggerMock: ILogger;
 
 export default {
 
@@ -21,13 +30,11 @@ export default {
   afterAll: () => mock.stopAll(),
 
   beforeEach: () => {
-    defaultExtensionMock = new VersionLensExtension(
-      {
-        get: (k) => null,
-        defrost: () => null
-      },
-      null
-    );
+    extensionMock = Mock(VersionLensExtension);
+    cacheOptsMock = Mock(CachingOptions);
+    httpOptsMock = Mock(HttpOptions);
+    githubOptsMock = Mock(GitHubOptions);
+    loggerMock = Mock(LoggerStub);
   },
 
   'fetchGitPackage': {
@@ -55,8 +62,13 @@ export default {
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(defaultExtensionMock),
-        new LoggerMock()
+        new NpmConfig(
+          instance(extensionMock),
+          instance(cacheOptsMock),
+          instance(httpOptsMock),
+          instance(githubOptsMock),
+        ),
+        instance(loggerMock)
       );
 
       return cut.fetchPackage(testRequest)
@@ -95,8 +107,13 @@ export default {
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(defaultExtensionMock),
-        new LoggerMock()
+        new NpmConfig(
+          instance(extensionMock),
+          instance(cacheOptsMock),
+          instance(httpOptsMock),
+          instance(githubOptsMock),
+        ),
+        instance(loggerMock)
       );
 
       return cut.fetchPackage(testRequest)

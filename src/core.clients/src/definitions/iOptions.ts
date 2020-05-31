@@ -1,12 +1,12 @@
-import { IFrozenRepository } from 'core.generics';
+import { IFrozenOptions } from "core.configuration";
 
 export enum CachingContributions {
   CacheDuration = 'duration',
 }
 
-export interface ICachingOptions extends IFrozenRepository {
+export interface ICachingOptions extends IFrozenOptions {
 
-  config: IFrozenRepository;
+  config: IFrozenOptions;
 
   duration: number;
 
@@ -16,9 +16,9 @@ export enum HttpContributions {
   StrictSSL = 'strictSSL'
 }
 
-export interface IHttpOptions extends IFrozenRepository {
+export interface IHttpOptions extends IFrozenOptions {
 
-  config: IFrozenRepository;
+  config: IFrozenOptions;
 
   strictSSL: boolean;
 
