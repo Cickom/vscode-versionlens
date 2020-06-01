@@ -1,6 +1,7 @@
 import { KeyDictionary } from 'core.generics'
 import { AbstractVersionLensProvider } from 'presentation.providers'
 import { IProviderConfig } from './definitions/iProviderConfig';
+import { ILogger } from 'core.logging';
 
 export class ProviderRegistry {
 
@@ -8,7 +9,11 @@ export class ProviderRegistry {
 
   providerNames: Array<string>;
 
-  constructor() {
+  logger: ILogger;
+
+  constructor(logger: ILogger) {
+    this.logger = logger;
+
     this.providers = {};
 
     this.providerNames = [
@@ -27,9 +32,21 @@ export class ProviderRegistry {
   ): AbstractVersionLensProvider<IProviderConfig> {
 
     const key = provider.config.options.providerName;
-    if (this.has(key)) throw new Error('Provider already registered');
+    if (this.has(key)) {
+      const msg = "Provider already registered: " + key;
+      this.logger.error(msg);
+      throw new Error(msg);
+    }
 
     this.providers[key] = provider;
+
+    this.logger.debug(
+      "Registered provider for %s:\t file pattern: %s\t caching: %s minutes\t strict ssl: %s",
+      key,
+      provider.config.options.selector.pattern,
+      provider.config.caching.duration,
+      provider.config.http.strictSSL,
+    );
 
     return provider;
   }

@@ -1,13 +1,12 @@
 // design-time references
 import * as VsCodeTypes from 'vscode';
-import { AwilixContainer } from 'awilix';
 
 // compiled run-time references
 import { ILogger, LoggingOptions } from 'core.logging';
-
 import { HttpOptions, CachingOptions } from 'core.clients';
 
 import { VsCodeConfig } from 'infrastructure.configuration';
+import { IVsCodeWorkspace } from 'infrastructure.configuration';
 
 import {
   VersionLensExtension,
@@ -18,12 +17,8 @@ import {
 } from 'presentation.extension';
 
 import { ProviderRegistry } from 'presentation.providers';
-import { IVsCodeWorkspace } from 'infrastructure.configuration';
 
 export interface IContainerMap {
-
-  // container (only for composing complex deps)
-  container: AwilixContainer<IContainerMap>,
 
   // vscode abstractions
   vscodeWorkspace: IVsCodeWorkspace,

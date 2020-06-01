@@ -14,13 +14,13 @@ export class TextEditorEvents {
   providerRegistry: ProviderRegistry;
 
   constructor(
-    extensionState: VersionLensState,
-    providerRegistry: ProviderRegistry,
+    state: VersionLensState,
+    registry: ProviderRegistry,
     logger: ILogger
   ) {
-    this.state = extensionState;
+    this.state = state;
     this.logger = logger;
-    this.providerRegistry = providerRegistry;
+    this.providerRegistry = registry;
 
     // register editor events
     const { window } = require('vscode');

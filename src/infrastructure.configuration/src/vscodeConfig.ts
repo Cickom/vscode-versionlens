@@ -13,9 +13,9 @@ export class VsCodeConfig implements IFrozenOptions {
 
   workspace: IVsCodeWorkspace;
 
-  constructor(vscodeWorkspace: IVsCodeWorkspace, extensionName: string) {
-    this.workspace = vscodeWorkspace;
-    this.section = extensionName;
+  constructor(workspace: IVsCodeWorkspace, section: string) {
+    this.workspace = workspace;
+    this.section = section;
     this.frozen = null;
   }
 

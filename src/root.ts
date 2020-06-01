@@ -3,7 +3,7 @@ import * as VsCodeTypes from 'vscode';
 import { AwilixContainer } from 'awilix';
 
 // run-time compiled references
-import { ILogger, LoggingOptions } from 'core.logging';
+import { LoggingOptions } from 'core.logging';
 import { HttpOptions, CachingOptions } from 'core.clients';
 
 import { VsCodeConfig } from 'infrastructure.configuration';
@@ -31,7 +31,6 @@ const {
   createContainer,
   asValue,
   asFunction,
-  asClass,
   InjectionMode
 } = require('awilix');
 
@@ -43,21 +42,16 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
 
   const containerMap: IContainerMap = {
 
-    // container (only for composing complex deps)
-    container: asFunction(() => container).singleton(),
+    extensionName: asValue(VersionLensExtension.extensionName.toLowerCase()),
 
     // vscode abstractions
     vscodeWorkspace: asValue(workspace),
 
     // maps to the vscode configuration
-    rootConfig: asClass(VsCodeConfig).singleton(),
-
-    // logging
-    outputChannel: asFunction(
-      extensionName => window.createOutputChannel(extensionName)
+    rootConfig: asFunction(
+      (vscodeWorkspace, extensionName) =>
+        new VsCodeConfig(vscodeWorkspace, extensionName)
     ).singleton(),
-
-    logger: asFunction(createLogger).singleton(),
 
     // logging options
     loggingOptions: asFunction(
@@ -72,21 +66,65 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
       rootConfig => new CachingOptions(rootConfig, 'caching')
     ).singleton(),
 
+    // logging
+    outputChannel: asFunction(
+      extensionName => window.createOutputChannel(extensionName)
+    ).singleton(),
+
+    logger: asFunction(
+      (outputChannel, loggingOptions) =>
+        createWinstonLogger(outputChannel, loggingOptions)
+          .child({ namespace: 'extension' })
+    ).singleton(),
+
     // extension
-    extensionName: asValue(VersionLensExtension.extensionName.toLowerCase()),
-    extension: asClass(VersionLensExtension).singleton(),
-    extensionState: asClass(VersionLensState).singleton(),
+    extension: asFunction(
+      rootConfig => new VersionLensExtension(rootConfig)
+    ).singleton(),
+
+    extensionState: asFunction(
+      extension => new VersionLensState(extension)
+    ).singleton(),
 
     // commands
     subscriptions: asValue(context.subscriptions),
-    iconCommands: asFunction(registerIconCommands).singleton(),
-    suggestionCommands: asFunction(registerSuggestionCommands).singleton(),
+
+    iconCommands: asFunction(
+      (extensionState, providerRegistry, subscriptions, outputChannel, logger) =>
+        registerIconCommands(
+          extensionState,
+          providerRegistry,
+          subscriptions,
+          outputChannel,
+          logger.child({ namespace: 'icon commands' })
+        )
+    ).singleton(),
+
+    suggestionCommands: asFunction(
+      (extension, subscriptions, logger) =>
+        registerSuggestionCommands(
+          extension,
+          subscriptions,
+          logger.child({ namespace: 'suggestion commands' })
+        )
+    ).singleton(),
 
     // events
-    textEditorEvents: asClass(TextEditorEvents).singleton(),
+    textEditorEvents: asFunction(
+      (extensionState, providerRegistry, logger) =>
+        new TextEditorEvents(
+          extensionState,
+          providerRegistry,
+          logger.child({ namespace: 'text editor' })
+        )
+    ).singleton(),
 
     // providers
-    providerRegistry: asClass(ProviderRegistry).singleton(),
+    providerRegistry: asFunction(
+      logger => new ProviderRegistry(
+        logger.child({ namespace: 'provider registry' })
+      )
+    ).singleton(),
   };
 
   // register the map
@@ -116,40 +154,28 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
       // show icons in active text editor if versionLens.providerActive
       textEditorEvents.onDidChangeActiveTextEditor(window.activeTextEditor);
     });
-
-}
-
-function createLogger(outputChannel: VsCodeTypes.OutputChannel, loggingOptions: LoggingOptions): ILogger {
-  const logger = createWinstonLogger(outputChannel, loggingOptions);
-  return logger.child({ namespace: 'extension' });
 }
 
 async function registerProviders(container: AwilixContainer<IContainerMap>): Promise<any> {
 
-  const { providerRegistry, logger, subscriptions } = container.cradle;
+  const { providerRegistry, subscriptions, logger } = container.cradle;
 
   const providerNames = providerRegistry.providerNames;
 
   logger.debug('Registering providers %o', providerNames.join(', '));
 
   const promised = providerNames.map(
-    packageManager => {
-      return import(`infrastructure.providers/${packageManager}/index`)
+    providerName => {
+      return import(`infrastructure.providers/${providerName}/index`)
         .then(module => {
 
-          logger.debug('Activating package manager %s', packageManager);
+          logger.debug('Activating container scope for %s', providerName);
 
+          // create a container scope for the provider
           const scopeContainer = container.createScope();
           const provider = module.composition(scopeContainer);
 
-          logger.debug(
-            'Activated package provider for %s:\n file pattern: %s\n caching: %s minutes\n strict ssl: %s\n',
-            packageManager,
-            provider.config.options.selector.pattern,
-            provider.config.caching.duration,
-            provider.config.http.strictSSL,
-          );
-
+          // register the provider
           providerRegistry.register(provider);
 
           // register the command with vscode
@@ -160,12 +186,11 @@ async function registerProviders(container: AwilixContainer<IContainerMap>): Pro
 
           // give vscode the command disposable
           subscriptions.push(sub);
-
         })
         .catch(error => {
           logger.error(
-            'Could not register package manager %s. Reason: %O',
-            packageManager,
+            'Could not register provider %s. Reason: %O',
+            providerName,
             error,
           );
         });

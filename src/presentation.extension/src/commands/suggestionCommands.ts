@@ -63,7 +63,7 @@ export function registerSuggestionCommands(
   extension: VersionLensExtension,
   subscriptions: Array<VsCodeTypes.Disposable>,
   logger: ILogger
-): void {
+): SuggestionCommands {
 
   // create the dependency
   const suggestionCommands = new SuggestionCommands(extension, logger);
@@ -77,4 +77,5 @@ export function registerSuggestionCommands(
     )
   );
 
+  return suggestionCommands;
 }

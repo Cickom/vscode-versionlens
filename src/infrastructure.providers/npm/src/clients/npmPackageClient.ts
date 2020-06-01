@@ -10,12 +10,12 @@ import {
 } from 'core.packages';
 import { ClientResponseSource } from 'core.clients';
 
-import { NpmConfig } from '../npmConfig';
 import * as PackageFactory from '../factories/packageFactory';
 import { NpaSpec, NpaTypes } from '../models/npaSpec';
+import * as NpmUtils from '../npmUtils';
+import { NpmConfig } from '../npmConfig';
 import { PacoteClient } from './pacoteClient';
 import { GitHubClient } from './githubClient';
-import * as NpmUtils from '../npmUtils';
 
 export class NpmPackageClient implements IPackageClient<null> {
 

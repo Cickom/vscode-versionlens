@@ -1,36 +1,29 @@
 // vscode references
 import * as VsCodeTypes from 'vscode';
-import { AwilixContainer } from 'awilix';
+import { ILogger } from 'core.logging';
 
 import { CommandHelpers } from 'presentation.extension';
 import { ProviderRegistry } from 'presentation.providers';
 
-import { VersionLensExtension } from "../versionLensExtension";
-import { VersionLensState } from '../versionLensState';
-import * as InstalledStatusHelpers from '../helpers/installedStatusHelpers';
-
 import { IconCommandContributions } from '../definitions/eIconCommandContributions';
-
-import { IContainerMap } from '../../../container';
+import * as InstalledStatusHelpers from '../helpers/installedStatusHelpers';
+import { VersionLensState } from '../versionLensState';
 
 export class IconCommands {
 
   state: VersionLensState;
-
-  extension: VersionLensExtension;
 
   outputChannel: VsCodeTypes.OutputChannel;
 
   providerRegistry: ProviderRegistry;
 
   constructor(
-    extension: VersionLensExtension,
+    state: VersionLensState,
     outputChannel: VsCodeTypes.OutputChannel,
     providerRegistry: ProviderRegistry
   ) {
-    this.extension = extension
+    this.state = state;
     this.outputChannel = outputChannel;
-    this.state = extension.state;
     this.providerRegistry = providerRegistry;
   }
 
@@ -90,19 +83,17 @@ export class IconCommands {
 
 }
 
-export function registerIconCommands(container: AwilixContainer<IContainerMap>): IconCommands {
-
-  const {
-    extension,
-    providerRegistry,
-    subscriptions,
-    outputChannel,
-    logger,
-  } = container.cradle;
+export function registerIconCommands(
+  state: VersionLensState,
+  providerRegistry: ProviderRegistry,
+  subscriptions: Array<VsCodeTypes.Disposable>,
+  outputChannel: VsCodeTypes.OutputChannel,
+  logger: ILogger
+): IconCommands {
 
   // create the dependency
   const iconCommands = new IconCommands(
-    extension,
+    state,
     outputChannel,
     providerRegistry
   );
