@@ -1,21 +1,26 @@
 // compiled run-time references
-import { ILogger } from 'core.logging';
-import { ICachingOptions, IHttpOptions } from 'core.clients';
+import { ICachingOptions, IHttpOptions, IJsonHttpClient } from 'core.clients';
 
 import { PubConfig } from '../pubConfig';
+import { PubClient } from '../pubClient';
 import { PubVersionLensProvider } from '../pubProvider';
 
 export interface IPubContainerMap {
+
+  // options
+  pubCachingOpts: ICachingOptions,
+
+  pubHttpOpts: IHttpOptions,
+
   // config
   pubConfig: PubConfig,
 
-  // logging
-  pubLogger: ILogger,
+  // clients
+  pubJsonClient: IJsonHttpClient,
 
-  // options
-  pubCachingOptions: ICachingOptions,
-  pubHttpOptions: IHttpOptions,
+  pubClient: PubClient,
 
   // provider
   pubProvider: PubVersionLensProvider
+
 }

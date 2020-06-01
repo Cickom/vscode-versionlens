@@ -33,15 +33,15 @@ export class DotNetConfig extends AbstractProviderConfig {
 
   constructor(
     extension: VersionLensExtension,
-    dotnetCachingOptions: ICachingOptions,
-    dotnetHttpOptions: IHttpOptions,
-    nugetOptions: INugetOptions,
+    dotnetCachingOpts: ICachingOptions,
+    dotnetHttpOpts: IHttpOptions,
+    nugetOpts: INugetOptions,
   ) {
     super(extension);
 
-    this.caching = dotnetCachingOptions;
-    this.http = dotnetHttpOptions;
-    this.nuget = nugetOptions;
+    this.caching = dotnetCachingOpts;
+    this.http = dotnetHttpOpts;
+    this.nuget = nugetOpts;
   }
 
   get dependencyProperties(): Array<string> {

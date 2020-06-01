@@ -30,13 +30,13 @@ export class PubConfig extends AbstractProviderConfig {
 
   constructor(
     extension: VersionLensExtension,
-    pubCachingOptions: ICachingOptions,
-    pubHttpOptions: IHttpOptions,
+    caching: ICachingOptions,
+    http: IHttpOptions
   ) {
     super(extension);
 
-    this.caching = pubCachingOptions;
-    this.http = pubHttpOptions;
+    this.caching = caching;
+    this.http = http;
   }
 
   get dependencyProperties(): Array<string> {

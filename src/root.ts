@@ -99,21 +99,20 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
   container.resolve('iconCommands');
   container.resolve('suggestionCommands');
 
+  const {
+    logger,
+    loggingOptions,
+    textEditorEvents,
+  } = container.cradle;
+
+  // log general start up info
+  logger.info('version: %s', version);
+  logger.info('log level: %s', loggingOptions.level);
+  logger.info('log path: %s', context.logPath);
+
   // add providers to the providerRegistry
   await registerProviders(container)
     .then(() => {
-
-      const {
-        logger,
-        loggingOptions,
-        textEditorEvents,
-      } = container.cradle;
-
-      // log general start up info
-      logger.info('version: %s', version);
-      logger.info('log level: %s', loggingOptions.level);
-      logger.info('log path: %s', context.logPath);
-
       // show icons in active text editor if versionLens.providerActive
       textEditorEvents.onDidChangeActiveTextEditor(window.activeTextEditor);
     });

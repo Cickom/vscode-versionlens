@@ -16,17 +16,18 @@ import {
 
 import { NpmConfig } from './npmConfig';
 import { npmReplaceVersion } from './npmUtils';
-import { NpmPackageClient } from './clients/npmPackageClient';
 
 export class NpmVersionLensProvider extends AbstractVersionLensProvider<NpmConfig> {
 
-  packageClient: IPackageClient<null>;
+  logger: ILogger;
 
-  constructor(npmConfig: NpmConfig, npmLogger: ILogger) {
-    super(npmConfig, npmLogger);
+  client: IPackageClient<null>;
 
-    this.packageClient = new NpmPackageClient(npmConfig, npmLogger);
+  constructor(config: NpmConfig, client: IPackageClient<null>, logger: ILogger) {
+    super(config, logger);
 
+    this.logger = logger;
+    this.client = client;
     this.customReplaceFn = npmReplaceVersion;
   }
 
@@ -57,7 +58,7 @@ export class NpmVersionLensProvider extends AbstractVersionLensProvider<NpmConfi
 
     return RequestFactory.executeDependencyRequests(
       packagePath,
-      this.packageClient,
+      this.client,
       packageDependencies,
       context,
     );

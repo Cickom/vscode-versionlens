@@ -14,7 +14,7 @@ import { NpmConfig } from '../npmConfig';
 import * as PackageFactory from '../factories/packageFactory';
 import { NpaSpec, NpaTypes } from '../models/npaSpec';
 import { PacoteClient } from './pacoteClient';
-import { GithubClient } from './githubClient';
+import { GitHubClient } from './githubClient';
 import * as NpmUtils from '../npmUtils';
 
 export class NpmPackageClient implements IPackageClient<null> {
@@ -25,27 +25,19 @@ export class NpmPackageClient implements IPackageClient<null> {
 
   pacoteClient: PacoteClient;
 
-  githubClient: GithubClient;
+  githubClient: GitHubClient;
 
-  constructor(config: NpmConfig, logger: ILogger) {
+  constructor(
+    config: NpmConfig,
+    pacoteClient: PacoteClient,
+    githubClient: GitHubClient,
+    logger: ILogger
+  ) {
     this.config = config;
+
+    this.pacoteClient = pacoteClient;
+    this.githubClient = githubClient;
     this.logger = logger;
-
-    this.pacoteClient = new PacoteClient(
-      config,
-      logger.child({ namespace: 'npm pacote' })
-    );
-
-    const requestOptions = {
-      caching: config.caching,
-      http: config.http
-    };
-
-    this.githubClient = new GithubClient(
-      config,
-      requestOptions,
-      logger.child({ namespace: 'npm github' })
-    );
   }
 
   async fetchPackage(request: PackageRequest<null>): Promise<PackageDocument> {
@@ -80,7 +72,7 @@ export class NpmPackageClient implements IPackageClient<null> {
 
       if (npaSpec.type === NpaTypes.Git) {
 
-        if (!npaSpec.hosted ) {
+        if (!npaSpec.hosted) {
           // could not resolve
           return reject({
             status: 'EUNSUPPORTEDPROTOCOL',

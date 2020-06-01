@@ -31,13 +31,13 @@ export class DubConfig extends AbstractProviderConfig {
 
   constructor(
     extension: VersionLensExtension,
-    dubCachingOptions: ICachingOptions,
-    dubHttpOptions: IHttpOptions,
+    caching: ICachingOptions,
+    http: IHttpOptions,
   ) {
     super(extension);
 
-    this.caching = dubCachingOptions;
-    this.http = dubHttpOptions;
+    this.caching = caching;
+    this.http = http;
   }
 
   get dependencyProperties(): Array<string> {

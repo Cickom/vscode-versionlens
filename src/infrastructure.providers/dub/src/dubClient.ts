@@ -2,7 +2,7 @@ import { ILogger } from 'core.logging';
 import {
   HttpClientResponse,
   HttpClientRequestMethods,
-  HttpRequestOptions
+  IJsonHttpClient
 } from 'core.clients';
 import {
   DocumentFactory,
@@ -18,22 +18,27 @@ import {
   PackageSuggestion,
 } from 'core.packages';
 
-import { JsonHttpClientRequest, } from 'infrastructure.clients';
 import { DubConfig } from './dubConfig';
 
-export class DubClient extends JsonHttpClientRequest implements IPackageClient<null> {
+export class DubClient implements IPackageClient<null> {
 
   config: DubConfig;
 
-  constructor(config: DubConfig, options: HttpRequestOptions, logger: ILogger) {
-    super(logger, options);
+  client: IJsonHttpClient;
+
+  logger: ILogger;
+
+  constructor(config: DubConfig, client: IJsonHttpClient, logger: ILogger) {
     this.config = config;
+    this.logger = logger;
+    this.client = client;
   }
+
   async fetchPackage(request: PackageRequest<null>): Promise<PackageDocument> {
     const semverSpec = VersionHelpers.parseSemver(request.package.version);
     const url = `${this.config.apiUrl}/${encodeURIComponent(request.package.name)}/info`;
 
-    return createRemotePackageDocument(this, url, request, semverSpec)
+    return this.createRemotePackageDocument(url, request, semverSpec)
       .catch((error: HttpClientResponse) => {
         if (error.status === 404) {
           return DocumentFactory.createNotFound(
@@ -47,62 +52,63 @@ export class DubClient extends JsonHttpClientRequest implements IPackageClient<n
       });
   }
 
-}
+  async createRemotePackageDocument(
+    url: string,
+    request: PackageRequest<null>,
+    semverSpec: SemverSpec
+  ): Promise<PackageDocument> {
 
-async function createRemotePackageDocument(
-  client: JsonHttpClientRequest,
-  url: string,
-  request: PackageRequest<null>,
-  semverSpec: SemverSpec
-): Promise<PackageDocument> {
+    const query = {
+      minimize: 'true',
+    }
 
-  const queryParams = {
-    minimize: 'true',
+    const headers = {};
+
+    return this.client.request(HttpClientRequestMethods.get, url, query, headers)
+      .then(function (httpResponse): PackageDocument {
+
+        const packageInfo = httpResponse.data;
+
+        const { providerName } = request;
+
+        const versionRange = semverSpec.rawVersion;
+
+        const requested = request.package;
+
+        const resolved = {
+          name: requested.name,
+          version: versionRange,
+        };
+
+        const response = {
+          source: httpResponse.source,
+          status: httpResponse.status,
+        };
+
+        const rawVersions = VersionHelpers.extractVersionsFromMap(packageInfo.versions);
+
+        // seperate versions to releases and prereleases
+        const { releases, prereleases } = VersionHelpers.splitReleasesFromArray(rawVersions)
+
+        // analyse suggestions
+        const suggestions = createSuggestionTags(
+          versionRange,
+          releases,
+          prereleases
+        );
+
+        return {
+          providerName,
+          source: PackageSourceTypes.Registry,
+          response,
+          type: semverSpec.type,
+          requested,
+          resolved,
+          suggestions,
+        };
+      });
   }
 
-  return client.requestJson(HttpClientRequestMethods.get, url, queryParams)
-    .then(function (httpResponse): PackageDocument {
-
-      const packageInfo = httpResponse.data;
-
-      const { providerName } = request;
-
-      const versionRange = semverSpec.rawVersion;
-
-      const requested = request.package;
-
-      const resolved = {
-        name: requested.name,
-        version: versionRange,
-      };
-
-      const response = {
-        source: httpResponse.source,
-        status: httpResponse.status,
-      };
-
-      const rawVersions = VersionHelpers.extractVersionsFromMap(packageInfo.versions);
-
-      // seperate versions to releases and prereleases
-      const { releases, prereleases } = VersionHelpers.splitReleasesFromArray(rawVersions)
-
-      // analyse suggestions
-      const suggestions = createSuggestionTags(
-        versionRange,
-        releases,
-        prereleases
-      );
-
-      return {
-        providerName,
-        source: PackageSourceTypes.Registry,
-        response,
-        type: semverSpec.type,
-        requested,
-        resolved,
-        suggestions,
-      };
-    });
 }
 
 export function createSuggestionTags(

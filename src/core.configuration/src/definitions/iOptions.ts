@@ -1,6 +1,4 @@
-export interface IConfig {
-  get<T>(key: string): T;
-}
+import { IConfig } from "./iConfig";
 
 export interface IFrozenOptions extends IConfig {
 

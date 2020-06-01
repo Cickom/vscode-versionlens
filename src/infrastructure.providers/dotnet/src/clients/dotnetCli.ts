@@ -1,21 +1,25 @@
 import { ILogger } from 'core.logging';
-import { UrlHelpers } from 'core.clients';
-import { ProcessClientRequest } from 'infrastructure.clients';
+import { UrlHelpers, IProcessClient } from 'core.clients';
 import { DotNetSource } from '../definitions/dotnet';
 import { DotNetConfig } from '../dotnetConfig';
 
-export class DotNetClient extends ProcessClientRequest {
+export class DotNetCli {
 
   config: DotNetConfig;
 
-  constructor(config: DotNetConfig, logger: ILogger) {
-    super(config.caching, logger)
+  client: IProcessClient;
+
+  logger: ILogger;
+
+  constructor(config: DotNetConfig, client: IProcessClient, logger: ILogger) {
     this.config = config;
+    this.client = client;
+    this.logger = logger;
   }
 
   async fetchSources(cwd: string): Promise<Array<DotNetSource>> {
 
-    const promisedCli = super.request(
+    const promisedCli = this.client.request(
       'dotnet',
       ['nuget', 'list', 'source', '--format', 'short'],
       cwd

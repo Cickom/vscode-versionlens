@@ -21,21 +21,11 @@ export class ComposerVersionLensProvider
 
   _outdatedCache: {};
 
-  composerClient: ComposerClient;
+  client: ComposerClient;
 
-  constructor(composerConfig: ComposerConfig, composerLogger: ILogger) {
-    super(composerConfig, composerLogger);
-
-    const requestOptions = {
-      caching: composerConfig.caching,
-      http: composerConfig.http
-    };
-
-    this.composerClient = new ComposerClient(
-      composerConfig,
-      requestOptions,
-      composerLogger.child({ namespace: 'composer pkg client' })
-    );
+  constructor(config: ComposerConfig, client: ComposerClient, logger: ILogger) {
+    super(config, logger);
+    this.client = client;
   }
 
   async fetchVersionLenses(
@@ -59,7 +49,7 @@ export class ComposerVersionLensProvider
 
     return RequestFactory.executeDependencyRequests(
       packagePath,
-      this.composerClient,
+      this.client,
       packageDependencies,
       context,
     );

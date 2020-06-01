@@ -1,23 +1,42 @@
 // compiled run-time references
-import { ILogger } from 'core.logging';
-import { ICachingOptions, IHttpOptions } from 'core.clients';
+import {
+  ICachingOptions,
+  IHttpOptions,
+  IProcessClient,
+  IJsonHttpClient
+} from 'core.clients';
 
 import { DotNetConfig } from '../dotnetConfig';
 import { DotNetVersionLensProvider } from '../dotnetProvider';
 import { NugetOptions } from '../options/nugetOptions';
+import { DotNetCli } from '../clients/dotnetCli';
+import { NuGetResourceClient } from '../clients/nugetResourceClient';
+import { NuGetPackageClient } from '../clients/nugetPackageClient';
 
 export interface IDotNetContainerMap {
+  // options
+  nugetOpts: NugetOptions,
+
+  dotnetCachingOpts: ICachingOptions,
+
+  dotnetHttpOpts: IHttpOptions,
+
   // config
   dotnetConfig: DotNetConfig,
 
-  // logging
-  dotnetLogger: ILogger,
+  // cli
+  dotnetProcess: IProcessClient,
 
-  // options
-  dotnetCachingOptions: ICachingOptions,
-  dotnetHttpOptions: IHttpOptions,
-  nugetOptions: NugetOptions,
+  dotnetCli: DotNetCli,
+
+  // clients
+  dotnetJsonClient: IJsonHttpClient,
+
+  nugetClient: NuGetPackageClient,
+
+  nugetResClient: NuGetResourceClient,
 
   // provider
   dotnetProvider: DotNetVersionLensProvider
+
 }

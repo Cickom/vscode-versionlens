@@ -33,15 +33,15 @@ export class NpmConfig extends AbstractProviderConfig {
 
   constructor(
     extension: VersionLensExtension,
-    npmCachingOptions: ICachingOptions,
-    npmHttpOptions: IHttpOptions,
-    npmGitHubOptions: GitHubOptions,
+    caching: ICachingOptions,
+    http: IHttpOptions,
+    github: GitHubOptions,
   ) {
     super(extension);
 
-    this.caching = npmCachingOptions;
-    this.http = npmHttpOptions;
-    this.github = npmGitHubOptions;
+    this.caching = caching;
+    this.http = http;
+    this.github = github;
   }
 
   get dependencyProperties(): Array<string> {

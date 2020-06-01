@@ -4,30 +4,29 @@ import { AwilixContainer } from 'awilix';
 // run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
-import { NpmConfig } from './npmConfig';
-import { NpmVersionLensProvider } from './npmProvider'
-import { GitHubOptions } from './options/githubOptions';
-import { NpmContributions } from './definitions/eNpmContributions';
-import { INpmContainerMap } from './definitions/iNpmContainerMap';
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
 
+import { NpmConfig } from './npmConfig';
+import { NpmVersionLensProvider } from './npmProvider'
+import { NpmContributions } from './definitions/eNpmContributions';
+import { INpmContainerMap } from './definitions/iNpmContainerMap';
+import { GitHubOptions } from './options/githubOptions';
+import { NpmPackageClient } from './clients/npmPackageClient';
+import { PacoteClient } from './clients/pacoteClient';
+import { GitHubClient } from './clients/githubClient';
+import { createJsonClient } from 'infrastructure.clients';
+
 // run-time file system imports
-const { asFunction, asClass } = require('awilix');
+const { asFunction } = require('awilix');
 
 export function composition(
   container: AwilixContainer<INpmContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  container.register({
-
-    // logger
-    npmLogger: asFunction(logger => logger.child({ namespace: 'npm' })).singleton(),
-
-    // config
-    npmConfig: asClass(NpmConfig).singleton(),
+  const containerMap: INpmContainerMap = {
 
     // options
-    npmCachingOptions: asFunction(
+    npmCachingOpts: asFunction(
       extension => new CachingOptions(
         extension.config,
         NpmContributions.Caching,
@@ -35,7 +34,7 @@ export function composition(
       )
     ).singleton(),
 
-    npmHttpOptions: asFunction(
+    npmHttpOpts: asFunction(
       extension => new HttpOptions(
         extension.config,
         NpmContributions.Http,
@@ -43,7 +42,7 @@ export function composition(
       )
     ).singleton(),
 
-    npmGitHubOptions: asFunction(
+    npmGitHubOpts: asFunction(
       extension => new GitHubOptions(
         extension.config,
         NpmContributions.Github,
@@ -51,10 +50,64 @@ export function composition(
       )
     ).singleton(),
 
-    // lens provider
-    npmProvider: asClass(NpmVersionLensProvider).singleton(),
+    // config
+    npmConfig: asFunction(
+      (extension, npmCachingOpts, npmHttpOpts, npmGitHubOpts) =>
+        new NpmConfig(extension, npmCachingOpts, npmHttpOpts, npmGitHubOpts)
+    ).singleton(),
 
-  })
+    // clients
+    githubJsonClient: asFunction(
+      (npmCachingOpts, npmHttpOpts, logger) =>
+        createJsonClient(
+          {
+            caching: npmCachingOpts,
+            http: npmHttpOpts
+          },
+          logger.child({ namespace: 'npm request' })
+        )
+    ).singleton(),
+
+    githubClient: asFunction(
+      (npmConfig, githubJsonClient, logger) =>
+        new GitHubClient(
+          npmConfig,
+          githubJsonClient,
+          logger.child({ namespace: 'npm github' })
+        )
+    ).singleton(),
+
+    pacoteClient: asFunction(
+      (npmConfig, logger) =>
+        new PacoteClient(
+          npmConfig,
+          logger.child({ namespace: 'pacote client' })
+        )
+    ).singleton(),
+
+    npmClient: asFunction(
+      (npmConfig, githubClient, pacoteClient, logger) =>
+        new NpmPackageClient(
+          npmConfig,
+          pacoteClient,
+          githubClient,
+          logger.child({ namespace: 'npm client' })
+        )
+    ).singleton(),
+
+    // provider
+    npmProvider: asFunction(
+      (npmConfig, npmClient, logger) =>
+        new NpmVersionLensProvider(
+          npmConfig,
+          npmClient,
+          logger.child({ namespace: 'npm provider' })
+        )
+    ).singleton(),
+
+  };
+
+  container.register(<any>containerMap);
 
   return container.cradle.npmProvider;
 }

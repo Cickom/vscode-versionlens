@@ -6,28 +6,24 @@ import { CachingOptions, HttpOptions } from 'core.clients';
 
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
 
-import { PubConfig } from './pubConfig';
-import { PubVersionLensProvider } from './pubProvider'
 import { PubContributions } from './definitions/ePubContributions';
 import { IPubContainerMap } from './definitions/iPubContainerMap';
+import { PubVersionLensProvider } from './pubProvider'
+import { PubConfig } from './pubConfig';
+import { PubClient } from './pubClient';
+import { createJsonClient } from 'infrastructure.clients';
 
 // run-time file system imports
-const { asFunction, asClass } = require('awilix');
+const { asFunction } = require('awilix');
 
 export function composition(
   container: AwilixContainer<IPubContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  container.register({
-
-    // logger
-    pubLogger: asFunction(logger => logger.child({ namespace: 'pub' })).singleton(),
-
-    // config
-    pubConfig: asClass(PubConfig).singleton(),
+  const containerMap: IPubContainerMap = {
 
     // options
-    pubCachingOptions: asFunction(
+    pubCachingOpts: asFunction(
       extension => new CachingOptions(
         extension.config,
         PubContributions.Caching,
@@ -35,7 +31,7 @@ export function composition(
       )
     ).singleton(),
 
-    pubHttpOptions: asFunction(
+    pubHttpOpts: asFunction(
       extension => new HttpOptions(
         extension.config,
         PubContributions.Http,
@@ -43,10 +39,45 @@ export function composition(
       )
     ).singleton(),
 
-    // lens provider
-    pubProvider: asClass(PubVersionLensProvider).singleton(),
+    // config
+    pubConfig: asFunction(
+      (extension, pubCachingOpts, pubHttpOpts) =>
+        new PubConfig(extension, pubCachingOpts, pubHttpOpts)
+    ).singleton(),
 
-  })
+    // clients
+    pubJsonClient: asFunction(
+      (pubCachingOpts, pubHttpOpts, logger) =>
+        createJsonClient(
+          {
+            caching: pubCachingOpts,
+            http: pubHttpOpts
+          },
+          logger.child({ namespace: 'pub request' })
+        )
+    ).singleton(),
+
+    pubClient: asFunction(
+      (pubConfig, pubJsonClient, logger) =>
+        new PubClient(
+          pubConfig,
+          pubJsonClient,
+          logger.child({ namespace: 'pub client' })
+        )
+    ).singleton(),
+
+    // provider
+    pubProvider: asFunction(
+      (pubConfig, pubClient, logger) =>
+        new PubVersionLensProvider(
+          pubConfig,
+          pubClient,
+          logger.child({ namespace: 'pub provider' })
+        )
+    ).singleton(),
+  };
+
+  container.register(<any>containerMap)
 
   return container.cradle.pubProvider;
 }

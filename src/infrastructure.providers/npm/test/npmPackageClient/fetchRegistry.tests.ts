@@ -1,47 +1,31 @@
 import { LoggerStub } from 'test.core.logging';
 
-import { NpmConfig, NpmPackageClient, GitHubOptions } from 'infrastructure.providers/npm'
-
-import {
-  ClientResponseSource,
-  ICachingOptions,
-  CachingOptions,
-  IHttpOptions,
-  HttpOptions
-} from 'core.clients';
+import { ClientResponseSource } from 'core.clients';
 
 import { PackageSuggestionFlags } from 'core.packages';
 
-import { VersionLensExtension } from 'presentation.extension';
+import {
+  NpmConfig,
+  NpmPackageClient,
+  GitHubClient,
+  PacoteClient
+} from 'infrastructure.providers/npm'
 
-const { mock, instance } = require('ts-mockito');
+const { mock, instance, when, anything } = require('ts-mockito');
 
 const assert = require('assert')
-const requireMock = require('mock-require')
 
-let requestLightMock = null
-
-let extensionMock: VersionLensExtension;
-let cacheOptsMock: ICachingOptions;
-let httpOptsMock: IHttpOptions;
-let githubOptsMock: GitHubOptions;
+let configMock: NpmConfig;
+let pacoteMock: PacoteClient;
+let githubClientMock: GitHubClient;
 let loggerMock: LoggerStub;
 
 export default {
 
-  beforeAll: () => {
-    // mock require modules
-    requestLightMock = {}
-    requireMock('request-light', requestLightMock)
-  },
-
-  afterAll: () => requireMock.stopAll(),
-
   beforeEach: () => {
-    extensionMock = mock(VersionLensExtension);
-    cacheOptsMock = mock(CachingOptions);
-    httpOptsMock = mock(HttpOptions);
-    githubOptsMock = mock(GitHubOptions);
+    configMock = mock(NpmConfig);
+    pacoteMock = mock(PacoteClient);
+    githubClientMock = mock(GitHubClient);
     loggerMock = mock(LoggerStub);
   },
 
@@ -65,24 +49,20 @@ export default {
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+        instance(configMock),
+        instance(pacoteMock),
+        instance(githubClientMock),
         instance(loggerMock)
       );
 
       return testStates.forEach(async testState => {
 
-        requestLightMock.xhr = options => {
-          return Promise.resolve({
+        when(pacoteMock.fetchPackage(anything(), anything()))
+          .thenReject({
             status: testState.status,
-            responseText: "response",
+            data: "response",
             source: ClientResponseSource.remote
           })
-        };
 
         await cut.fetchPackage(testRequest)
           .then((actual) => {
@@ -98,6 +78,7 @@ export default {
               }]
             )
           })
+          .catch(e => console.error(e))
 
       })
 

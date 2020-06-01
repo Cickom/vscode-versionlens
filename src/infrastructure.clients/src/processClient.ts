@@ -1,21 +1,25 @@
 import {
-  AbstractClientRequest,
+  AbstractCachedRequest,
   ClientResponseSource,
   ProcessClientResponse,
-  IProcessClientRequest,
+  IProcessClient,
   ICachingOptions
 } from 'core.clients';
 import { ILogger } from 'core.logging';
 
-export class ProcessClientRequest
-  extends AbstractClientRequest<string, string>
-  implements IProcessClientRequest {
+import { IProcessSpawnFn } from './definitions/iProcessSpawnFn';
+
+export class ProcessClient extends AbstractCachedRequest<string, string>
+  implements IProcessClient {
+
+  ps: IProcessSpawnFn;
 
   logger: ILogger;
 
-  constructor(options: ICachingOptions, logger: ILogger) {
-    super(options);
-    this.logger = logger;
+  constructor(processOpts: ICachingOptions, processLogger: ILogger) {
+    super(processOpts);
+    this.logger = processLogger;
+    this.ps = require('@npmcli/promise-spawn');
   }
 
   async request(
@@ -24,7 +28,8 @@ export class ProcessClientRequest
 
     const cacheKey = `${cmd} ${args.join(' ')}`;
 
-    if (this.cache.options.duration > 0 && this.cache.hasExpired(cacheKey) === false) {
+    if (this.cache.cachingOpts.duration > 0 &&
+      this.cache.hasExpired(cacheKey) === false) {
       this.logger.debug('cached - %s', cacheKey);
 
       const cachedResp = this.cache.get(cacheKey);
@@ -33,8 +38,8 @@ export class ProcessClientRequest
     }
 
     this.logger.debug('executing - %s', cacheKey);
-    const ps = require('@npmcli/promise-spawn');
-    return ps(cmd, args, { cwd, stdioString: true })
+
+    return this.ps(cmd, args, { cwd, stdioString: true })
       .then(result => {
         return this.createCachedResponse(
           cacheKey,

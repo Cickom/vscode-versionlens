@@ -1,31 +1,29 @@
 import { KeyStringDictionary } from 'core.generics';
-import { ILogger } from 'core.logging';
 
 import {
-  HttpRequestOptions,
   HttpClientResponse,
   JsonClientResponse,
   HttpClientRequestMethods,
-  IJsonHttpClientRequest,
+  IJsonHttpClient,
+  IHttpClient
 } from 'core.clients';
 
-import { HttpClientRequest } from "./httpClientRequest";
+export class JsonHttpClient implements IJsonHttpClient {
 
-export class JsonHttpClientRequest
-  extends HttpClientRequest
-  implements IJsonHttpClientRequest {
+  httpClient: IHttpClient;
 
-  constructor(logger: ILogger, options: HttpRequestOptions) {
-    super(logger, options);
+  constructor(httpClient: IHttpClient) {
+    this.httpClient = httpClient;
   }
 
-  async requestJson(
+  async request(
     method: HttpClientRequestMethods,
     url: string,
     query: KeyStringDictionary = {},
     headers: KeyStringDictionary = {}
   ): Promise<JsonClientResponse> {
-    return super.request(method, url, query, headers)
+
+    return this.httpClient.request(method, url, query, headers)
       .then(function (response: HttpClientResponse) {
         return {
           source: response.source,
@@ -33,6 +31,7 @@ export class JsonHttpClientRequest
           data: JSON.parse(response.data),
         }
       });
+
   }
 
 }

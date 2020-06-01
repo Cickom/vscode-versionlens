@@ -1,22 +1,30 @@
 // compiled run-time references
-import { ILogger } from 'core.logging';
-import { ICachingOptions, IHttpOptions } from 'core.clients';
+import {
+  ICachingOptions,
+  IHttpOptions,
+  IJsonHttpClient
+} from 'core.clients';
 
 import { DubConfig } from '../dubConfig';
 import { DubVersionLensProvider } from '../dubProvider';
-
+import { DubClient } from '../dubClient';
 
 export interface IDubContainerMap {
+
+  // options
+  dubCachingOpts: ICachingOptions,
+
+  dubHttpOpts: IHttpOptions,
+
   // config
   dubConfig: DubConfig,
 
-  // logging
-  dubLogger: ILogger,
+  // clients
+  dubJsonClient: IJsonHttpClient,
 
-  // options
-  dubCachingOptions: ICachingOptions,
-  dubHttpOptions: IHttpOptions,
+  dubClient: DubClient,
 
   // provider
   dubProvider: DubVersionLensProvider
+
 }

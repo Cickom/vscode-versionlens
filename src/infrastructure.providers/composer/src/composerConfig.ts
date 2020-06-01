@@ -31,13 +31,12 @@ export class ComposerConfig extends AbstractProviderConfig {
 
   constructor(
     extension: VersionLensExtension,
-    composerCachingOptions: ICachingOptions,
-    composerHttpOptions: IHttpOptions
+    caching: ICachingOptions,
+    http: IHttpOptions
   ) {
     super(extension);
-
-    this.caching = composerCachingOptions;
-    this.http = composerHttpOptions;
+    this.caching = caching;
+    this.http = http;
   }
 
   get dependencyProperties(): Array<string> {

@@ -50,7 +50,6 @@
     "@types/vscode": "1.45.1",
     "@types/winston": "2.4.4",
     "mocha-ui-esm": "1.0.0-alpha.4",
-    "mock-require": "3.0.3",
     "rimraf": "3.0.2",
     "typescript": "3.9.3",
     "ts-mockito": "2.5.0",

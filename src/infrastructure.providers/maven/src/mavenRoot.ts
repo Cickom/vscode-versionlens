@@ -4,29 +4,27 @@ import { AwilixContainer } from 'awilix';
 // run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
+import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
+
 import { MavenConfig } from './mavenConfig';
 import { MavenVersionLensProvider } from './mavenProvider'
 import { MavenContributions } from './definitions/eMavenContributions';
 import { IMavenContainerMap } from './definitions/iMavenContainerMap';
-import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
+import { MvnCli } from './clients/mvnCli';
+import { MavenClient } from './clients/mavenClient';
+import { createHttpClient, ProcessClient } from 'infrastructure.clients';
 
 // run-time file system imports
-const { asFunction, asClass } = require('awilix');
+const { asFunction } = require('awilix');
 
 export function composition(
   container: AwilixContainer<IMavenContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  container.register({
-
-    // logger
-    mavenLogger: asFunction(logger => logger.child({ namespace: 'maven' })).singleton(),
-
-    // config
-    mavenConfig: asClass(MavenConfig).singleton(),
+  const containerMap: IMavenContainerMap = {
 
     // options
-    mavenCachingOptions: asFunction(
+    mavenCachingOpts: asFunction(
       extension => new CachingOptions(
         extension.config,
         MavenContributions.Caching,
@@ -34,7 +32,7 @@ export function composition(
       )
     ).singleton(),
 
-    mavenHttpOptions: asFunction(
+    mavenHttpOpts: asFunction(
       extension => new HttpOptions(
         extension.config,
         MavenContributions.Http,
@@ -42,9 +40,68 @@ export function composition(
       )
     ).singleton(),
 
-    // lens provider
-    mavenProvider: asClass(MavenVersionLensProvider).singleton(),
-  });
+    // config
+    mavenConfig: asFunction(
+      (extension, mavenCachingOpts, mavenHttpOpts) =>
+        new MavenConfig(
+          extension,
+          mavenCachingOpts,
+          mavenHttpOpts
+        )
+    ).singleton(),
+
+    // cli
+    mvnProcess: asFunction(
+      (mavenCachingOpts, logger) =>
+        new ProcessClient(
+          mavenCachingOpts,
+          logger.child({ namespace: 'maven mvn process' })
+        )
+    ).singleton(),
+
+    mvnCli: asFunction(
+      (mavenConfig, mvnProcess, logger) =>
+        new MvnCli(
+          mavenConfig,
+          mvnProcess,
+          logger.child({ namespace: 'maven mvn cli' })
+        )
+    ).singleton(),
+
+    // clients
+    mavenHttpClient: asFunction(
+      (mavenCachingOpts, mavenHttpOpts, logger) =>
+        createHttpClient(
+          {
+            caching: mavenCachingOpts,
+            http: mavenHttpOpts
+          },
+          logger.child({ namespace: 'maven request' })
+        )
+    ).singleton(),
+
+    mavenClient: asFunction(
+      (mavenConfig, mavenHttpClient, logger) =>
+        new MavenClient(
+          mavenConfig,
+          mavenHttpClient,
+          logger.child({ namespace: 'maven client' })
+        )
+    ).singleton(),
+
+    // provider
+    mavenProvider: asFunction(
+      (mavenConfig, mvnCli, mavenClient, logger) =>
+        new MavenVersionLensProvider(
+          mavenConfig,
+          mvnCli,
+          mavenClient,
+          logger.child({ namespace: 'maven provider' })
+        )
+    ).singleton(),
+  };
+
+  container.register(<any>containerMap);
 
   return container.cradle.mavenProvider;
 }

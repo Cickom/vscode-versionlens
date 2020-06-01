@@ -11,34 +11,25 @@ import { AbstractVersionLensProvider } from 'presentation.providers';
 import { MavenClientData } from './definitions/mavenClientData';
 import * as MavenXmlFactory from './mavenXmlParserFactory';
 import { MavenConfig } from './mavenConfig';
-import { MvnClient } from './clients/mvnClient';
+import { MvnCli } from './clients/mvnCli';
 import { MavenClient } from './clients/mavenClient';
 
-export class MavenVersionLensProvider
-  extends AbstractVersionLensProvider<MavenConfig> {
+export class MavenVersionLensProvider extends AbstractVersionLensProvider<MavenConfig> {
 
-  mvnClient: MvnClient;
+  mvnCli: MvnCli;
 
-  mavenClient: MavenClient;
+  client: MavenClient;
 
-  constructor(mavenConfig: MavenConfig, mavenLogger: ILogger) {
-    super(mavenConfig, mavenLogger);
+  constructor(
+    config: MavenConfig,
+    mnvCli: MvnCli,
+    client: MavenClient,
+    logger: ILogger
+  ) {
+    super(config, logger);
 
-    const requestOptions = {
-      caching: mavenConfig.caching,
-      http: mavenConfig.http
-    };
-
-    this.mvnClient = new MvnClient(
-      mavenConfig,
-      mavenLogger.child({ namespace: 'maven cli' })
-    );
-
-    this.mavenClient = new MavenClient(
-      mavenConfig,
-      requestOptions,
-      mavenLogger.child({ namespace: 'maven pkg client' })
-    );
+    this.mvnCli = mnvCli;
+    this.client = client;
   }
 
   async fetchVersionLenses(
@@ -53,7 +44,7 @@ export class MavenVersionLensProvider
     if (packageDependencies.length === 0) return null;
 
     // gets source feeds from the project path
-    const promisedRepos = this.mvnClient.fetchRepositories(packagePath);
+    const promisedRepos = this.mvnCli.fetchRepositories(packagePath);
 
     return promisedRepos.then(repos => {
 
@@ -72,7 +63,7 @@ export class MavenVersionLensProvider
 
       return RequestFactory.executeDependencyRequests(
         packagePath,
-        this.mavenClient,
+        this.client,
         packageDependencies,
         clientContext,
       );

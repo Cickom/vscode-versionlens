@@ -1,16 +1,16 @@
 import { ICachingOptions, IHttpOptions } from 'core.clients';
-import { VersionLensExtension } from 'presentation.extension';
 import { NpmConfig, GitHubOptions } from 'infrastructure.providers/npm';
+import { VersionLensExtension } from 'presentation.extension';
 
 export class JspmConfig extends NpmConfig {
 
   constructor(
     extension: VersionLensExtension,
-    jspmCachingOptions: ICachingOptions,
-    jspmHttpOptions: IHttpOptions,
-    jspmGitHubOptions: GitHubOptions
+    caching: ICachingOptions,
+    http: IHttpOptions,
+    github: GitHubOptions
   ) {
-    super(extension, jspmCachingOptions, jspmHttpOptions, jspmGitHubOptions);
+    super(extension, caching, http, github);
     this.options.providerName = 'jspm';
   }
 

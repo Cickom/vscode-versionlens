@@ -1,40 +1,30 @@
-import { NpmPackageClient, NpmConfig, GitHubOptions } from 'infrastructure.providers/npm';
 import { LoggerStub } from 'test.core.logging';
-import { VersionLensExtension } from 'presentation.extension';
-import { ClientResponseSource, ICachingOptions, IHttpOptions, CachingOptions, HttpOptions } from 'core.clients';
+import { ClientResponseSource } from 'core.clients';
 import { PackageSuggestionFlags } from 'core.packages';
-import { ILogger } from 'core.logging';
 
-const { mock: Mock, instance } = require('ts-mockito');
+import {
+  NpmPackageClient,
+  NpmConfig,
+  GitHubClient,
+  PacoteClient
+} from 'infrastructure.providers/npm';
+
+const { mock, instance, when, anything } = require('ts-mockito');
 
 const assert = require('assert')
-const mock = require('mock-require')
 
-
-let requestLightMock = null
-
-let extensionMock: VersionLensExtension;
-let cacheOptsMock: ICachingOptions;
-let httpOptsMock: IHttpOptions;
-let githubOptsMock: GitHubOptions;
-let loggerMock: ILogger;
+let configMock: NpmConfig;
+let pacoteMock: PacoteClient;
+let githubClientMock: GitHubClient;
+let loggerMock: LoggerStub;
 
 export default {
 
-  beforeAll: () => {
-    // mock require modules
-    requestLightMock = {}
-    mock('request-light', requestLightMock)
-  },
-
-  afterAll: () => mock.stopAll(),
-
   beforeEach: () => {
-    extensionMock = Mock(VersionLensExtension);
-    cacheOptsMock = Mock(CachingOptions);
-    httpOptsMock = Mock(HttpOptions);
-    githubOptsMock = Mock(GitHubOptions);
-    loggerMock = Mock(LoggerStub);
+    configMock = mock(NpmConfig);
+    pacoteMock = mock(PacoteClient);
+    githubClientMock = mock(GitHubClient);
+    loggerMock = mock(LoggerStub);
   },
 
   'fetchGitPackage': {
@@ -52,22 +42,18 @@ export default {
         }
       };
 
-      requestLightMock.xhr = options => {
-        return Promise.resolve({
+      when(pacoteMock.fetchPackage(anything(), anything()))
+        .thenResolve({
           status: 200,
-          responseText: "",
+          data: '',
           source: ClientResponseSource.remote
         })
-      };
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+        instance(configMock),
+        instance(pacoteMock),
+        instance(githubClientMock),
         instance(loggerMock)
       );
 
@@ -107,12 +93,9 @@ export default {
 
       // setup initial call
       const cut = new NpmPackageClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+        instance(configMock),
+        instance(pacoteMock),
+        instance(githubClientMock),
         instance(loggerMock)
       );
 

@@ -1,61 +1,44 @@
 import { LoggerStub } from 'test.core.logging';
 
 import { PackageSuggestionFlags } from 'core.packages';
-import { ILogger } from 'core.logging';
 
 import {
   NpmConfig,
-  NpmPackageClient,
-  GitHubOptions
+  GitHubOptions,
+  GitHubClient
 } from 'infrastructure.providers/npm'
 
 import {
-  ICachingOptions,
-  CachingOptions,
-  IHttpOptions,
-  HttpOptions,
-  ClientResponseSource
+  ClientResponseSource,
+  JsonHttpClient,
+  IJsonHttpClient
 } from 'core.clients';
 
-import { VersionLensExtension } from 'presentation.extension';
+import { githubFixtures } from './fetchGitHub.fixtures'
 
-import { githubFixtures } from './fetchGithub.fixtures'
-
-const { mock, instance, when } = require('ts-mockito');
-
+const { mock, instance, when, anything, capture } = require('ts-mockito');
 const assert = require('assert')
-const requireMock = require('mock-require')
+const npa = require('npm-package-arg');
 
-let requestLightMock = null
-
-let extensionMock: VersionLensExtension;
-let cacheOptsMock: ICachingOptions;
-let httpOptsMock: IHttpOptions;
 let githubOptsMock: GitHubOptions;
-let loggerMock: ILogger;
+let configMock: NpmConfig;
+let loggerMock: LoggerStub;
+let jsonClientMock: IJsonHttpClient;
 
 export default {
 
-  beforeAll: () => {
-    // mock require modules
-    requestLightMock = {}
-    requireMock('request-light', requestLightMock)
-  },
-
-  afterAll: () => requireMock.stopAll(),
-
   beforeEach: () => {
-    extensionMock = mock(VersionLensExtension);
-    cacheOptsMock = mock(CachingOptions);
-    httpOptsMock = mock(HttpOptions);
     githubOptsMock = mock(GitHubOptions);
+    configMock = mock(NpmConfig);
+    jsonClientMock = mock(JsonHttpClient);
     loggerMock = mock(LoggerStub);
+
+    when(configMock.github).thenReturn(instance(githubOptsMock))
   },
 
-  'fetchGithubPackage': {
+  'fetchTags': {
 
     'returns a #semver:x.x.x. package': async () => {
-
       const testRequest: any = {
         providerName: 'testnpmprovider',
         package: {
@@ -65,26 +48,27 @@ export default {
         }
       };
 
-      requestLightMock.xhr = options => {
-        return Promise.resolve({
+      const testSpec = npa.resolve(
+        testRequest.package.name,
+        testRequest.package.version,
+        testRequest.package.path
+      );
+
+      when(jsonClientMock.request(anything(), anything(), anything(), anything()))
+        .thenResolve({
           status: 200,
-          responseText: JSON.stringify(githubFixtures.tags),
+          data: githubFixtures.tags,
           source: ClientResponseSource.remote
         })
-      };
 
       // setup initial call
-      const cut = new NpmPackageClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+      const cut = new GitHubClient(
+        instance(configMock),
+        instance(jsonClientMock),
         instance(loggerMock)
       );
 
-      return cut.fetchPackage(testRequest)
+      return cut.fetchGithub(testRequest, <any>testSpec)
         .then((actual) => {
           assert.equal(actual.source, 'github')
           assert.equal(actual.type, 'range')
@@ -125,26 +109,27 @@ export default {
         }
       };
 
-      requestLightMock.xhr = options => {
-        return Promise.resolve({
+      const testSpec = npa.resolve(
+        testRequest.package.name,
+        testRequest.package.version,
+        testRequest.package.path
+      );
+
+      when(jsonClientMock.request(anything(), anything(), anything(), anything()))
+        .thenResolve({
           status: 200,
-          responseText: JSON.stringify(githubFixtures.tags),
+          data: githubFixtures.tags,
           source: ClientResponseSource.remote
         })
-      };
 
       // setup initial call
-      const cut = new NpmPackageClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+      const cut = new GitHubClient(
+        instance(configMock),
+        instance(jsonClientMock),
         instance(loggerMock)
       );
 
-      return cut.fetchPackage(testRequest)
+      return cut.fetchGithub(testRequest, testSpec)
         .then((actual) => {
           assert.equal(actual.source, 'github')
           assert.equal(actual.type, 'range')
@@ -186,26 +171,26 @@ export default {
         }
       };
 
-      requestLightMock.xhr = options => {
-        return Promise.resolve({
+      const testSpec = npa.resolve(
+        testRequest.package.name,
+        testRequest.package.version,
+        testRequest.package.path
+      );
+
+      when(jsonClientMock.request(anything(), anything(), anything(), anything()))
+        .thenResolve({
           status: 200,
-          responseText: JSON.stringify(githubFixtures.commits),
+          data: githubFixtures.commits,
           source: ClientResponseSource.remote
         })
-      };
 
-      // setup initial call
-      const cut = new NpmPackageClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+      const cut = new GitHubClient(
+        instance(configMock),
+        instance(jsonClientMock),
         instance(loggerMock)
       );
 
-      return cut.fetchPackage(testRequest)
+      return cut.fetchGithub(testRequest, testSpec)
         .then((actual) => {
           assert.equal(actual.source, 'github')
           assert.equal(actual.type, 'committish')
@@ -239,33 +224,33 @@ export default {
         }
       };
 
+      const testSpec = npa.resolve(
+        testRequest.package.name,
+        testRequest.package.version,
+        testRequest.package.path
+      );
+
       const testToken = 'testToken';
 
-      requestLightMock.xhr = options => {
-        const actual = options.headers['authorization'];
-        assert.equal(actual, 'token ' + testToken)
-
-        return Promise.resolve({
+      when(jsonClientMock.request(anything(), anything(), anything(), anything()))
+        .thenResolve({
           status: 200,
-          responseText: JSON.stringify(githubFixtures.commits),
+          data: githubFixtures.commits,
           source: ClientResponseSource.remote
         })
-      };
 
       when(githubOptsMock.accessToken).thenReturn(testToken);
 
-      // setup initial call
-      const cut = new NpmPackageClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+      const cut = new GitHubClient(
+        instance(configMock),
+        instance(jsonClientMock),
         instance(loggerMock)
       );
 
-      return cut.fetchPackage(testRequest);
+      await cut.fetchGithub(testRequest, testSpec)
+
+      const [, , , actualHeaders] = capture(jsonClientMock.request).first();
+      assert.equal(actualHeaders['authorization'], 'token ' + testToken);
     }
 
   }

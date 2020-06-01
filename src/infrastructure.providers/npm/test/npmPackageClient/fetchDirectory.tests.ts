@@ -1,40 +1,28 @@
 import { LoggerStub } from 'test.core.logging';
 
 import {
-  ICachingOptions,
-  CachingOptions,
-  IHttpOptions,
-  HttpOptions
-} from 'core.clients';
-
-import {
   NpmConfig,
   NpmPackageClient,
-  GitHubOptions
+  GitHubClient
 } from 'infrastructure.providers/npm'
 
-import { VersionLensExtension } from 'presentation.extension';
+import { PacoteClient } from 'infrastructure.providers/npm';
 
 const { mock, instance } = require('ts-mockito');
 
 const assert = require('assert')
-const requireMock = require('mock-require')
 
-let extensionMock: VersionLensExtension;
-let cacheOptsMock: ICachingOptions;
-let httpOptsMock: IHttpOptions;
-let githubOptsMock: GitHubOptions;
+let configMock: NpmConfig;
+let pacoteMock: PacoteClient;
+let githubClientMock: GitHubClient;
 let loggerMock: LoggerStub;
 
 export default {
 
-  afterAll: () => requireMock.stopAll(),
-
   beforeEach: () => {
-    extensionMock = mock(VersionLensExtension)
-    cacheOptsMock = mock(CachingOptions);
-    httpOptsMock = mock(HttpOptions);
-    githubOptsMock = mock(GitHubOptions);
+    configMock = mock(NpmConfig);
+    pacoteMock = mock(PacoteClient);
+    githubClientMock = mock(GitHubClient);
     loggerMock = mock(LoggerStub);
   },
 
@@ -56,12 +44,9 @@ export default {
       }
 
       const cut = new NpmPackageClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock)
-        ),
+        instance(configMock),
+        instance(pacoteMock),
+        instance(githubClientMock),
         instance(loggerMock)
       );
 

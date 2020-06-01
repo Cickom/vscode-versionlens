@@ -10,52 +10,49 @@ import {
   ICachingOptions,
   IHttpOptions,
   CachingOptions,
-  HttpOptions,
+  HttpOptions
 } from 'core.clients'
 
-import { HttpClientRequest } from 'infrastructure.clients'
+import { HttpClient } from 'infrastructure.clients'
 
-const { mock, instance, when } = require('ts-mockito');
+import { RequestLightStub } from './stubs/requestLightStub';
+
+const {
+  mock,
+  instance,
+  when,
+  capture,
+  anything
+} = require('ts-mockito');
 
 const assert = require('assert')
-const requireMock = require('mock-require')
-
-let requestLightMock = null
-let testContext = null
 
 let cachingOptsMock: ICachingOptions;
 let httpOptsMock: IHttpOptions;
 let loggerMock: ILogger;
+let requestLightMock: RequestLightStub;
+
+let rut: HttpClient;
 
 export const HttpRequestTests = {
 
-  beforeAll: () => {
-    testContext = {}
-    // mock require modules
-    requestLightMock = {}
-    requireMock('request-light', requestLightMock)
-  },
-
-  afterAll: () => requireMock.stopAll(),
-
   beforeEach: () => {
-
     cachingOptsMock = mock(CachingOptions);
     httpOptsMock = mock(HttpOptions);
     loggerMock = mock(LoggerStub);
+    requestLightMock = mock(RequestLightStub);
 
-    const caching = when(cachingOptsMock.duration).thenReturn(30000);
-    const http = when(httpOptsMock.strictSSL).thenReturn(true);
-
-    testContext.rut = new HttpClientRequest(
-      instance(loggerMock),
+    rut = new HttpClient(
       <HttpRequestOptions>{
-        caching,
-        http
-      }
+        caching: instance(cachingOptsMock),
+        http: instance(httpOptsMock)
+      },
+      instance(loggerMock)
     );
+    rut.requestLight = instance(requestLightMock)
 
-    requestLightMock.xhr = _ => { throw new Error("Not implemented") }
+    when(cachingOptsMock.duration).thenReturn(30000);
+    when(httpOptsMock.strictSSL).thenReturn(true);
   },
 
   "request": {
@@ -67,29 +64,31 @@ export const HttpRequestTests = {
         { testStrictSSL: false, testDuration: 0 },
       ];
 
-      return testFlags.forEach(async (test) => {
+      when(requestLightMock.xhr(anything()))
+        .thenResolve({
+          responseText: '{}',
+          status: 200
+        })
 
-        requestLightMock.xhr = options => {
-          assert.equal(options.strictSSL, test.testStrictSSL)
-          return Promise.resolve({})
-        };
+      testFlags.forEach(async (test, testIndex) => {
+        when(cachingOptsMock.duration).thenReturn(test.testDuration);
+        when(httpOptsMock.strictSSL).thenReturn(test.testStrictSSL);
 
-        const caching = when(cachingOptsMock.duration)
-          .thenReturn(test.testDuration);
-
-        const http = when(httpOptsMock.strictSSL)
-          .thenReturn(test.testStrictSSL);
-
-        const rut = new HttpClientRequest(
-          instance(loggerMock),
-          <HttpRequestOptions>{ caching, http }
+        const rut = new HttpClient(
+          <HttpRequestOptions>{
+            caching: instance(cachingOptsMock),
+            http: instance(httpOptsMock)
+          },
+          instance(loggerMock)
         );
 
-        await rut.request(
-          HttpClientRequestMethods.get,
-          'anywhere'
-        )
-
+        rut.requestLight = instance(requestLightMock)
+        await rut.request(HttpClientRequestMethods.get, 'anywhere')
+          .then(() => {
+            const [actualOpts] = capture(requestLightMock.xhr).byCallIndex(testIndex);
+            assert.equal(actualOpts.strictSSL, test.testStrictSSL);
+          })
+          .catch(e => console.error(e))
       })
 
     },
@@ -102,25 +101,30 @@ export const HttpRequestTests = {
         { param1: 1, param2: 2 }
       ]
 
+      when(requestLightMock.xhr(anything()))
+        .thenResolve({
+          status: 200,
+          responseText: null
+        })
+
       await Promise.all(
 
-        testQueryParams.map(async function (query: KeyStringDictionary) {
-          const expectedUrl = UrlHelpers.createUrl(testUrl, query);
-          requestLightMock.xhr = options => {
-            assert.equal(options.url, expectedUrl);
-            assert.equal(options.type, HttpClientRequestMethods.get);
-            return Promise.resolve({
-              status: 200,
-              responseText: null
-            })
-          };
+        testQueryParams.map(
+          async function (query: KeyStringDictionary, index) {
+            const expectedUrl = UrlHelpers.createUrl(testUrl, query);
 
-          return await testContext.rut.request(
-            HttpClientRequestMethods.get,
-            testUrl,
-            query
-          )
-        })
+            await rut.request(
+              HttpClientRequestMethods.get,
+              testUrl,
+              query
+            ).then(() => {
+              const [actualOpts] = capture(requestLightMock.xhr).byCallIndex(index);
+              assert.equal(actualOpts.url, expectedUrl);
+              assert.equal(actualOpts.type, HttpClientRequestMethods.get);
+            })
+
+          }
+        )
       )
 
     },
@@ -141,16 +145,14 @@ export const HttpRequestTests = {
         rejected: false
       }
 
-      requestLightMock.xhr = options => {
-        return Promise.resolve(testResponse)
-      };
+      when(requestLightMock.xhr(anything())).thenResolve(testResponse)
 
-      await testContext.rut.request(
+      await rut.request(
         HttpClientRequestMethods.get,
         testUrl,
         testQueryParams
       ).then(response => {
-        const cachedData = testContext.rut.cache.get('GET_' + testUrl);
+        const cachedData = rut.cache.get('GET_' + testUrl);
         assert.deepEqual(cachedData, expectedCacheData);
       })
     },
@@ -171,27 +173,25 @@ export const HttpRequestTests = {
         rejected: true,
       }
 
-      requestLightMock.xhr = options => {
-        return Promise.reject(testResponse)
-      };
+      when(requestLightMock.xhr(anything())).thenResolve(testResponse)
 
       // first request
-      await testContext.rut.request(
+      await rut.request(
         HttpClientRequestMethods.get,
         testUrl,
         testQueryParams
       ).catch(response => {
-        const cachedData = testContext.rut.cache.get('GET_' + testUrl);
+        const cachedData = rut.cache.get('GET_' + testUrl);
         assert.deepEqual(cachedData, expectedCacheData);
       })
 
       // accessing a cached rejection should also reject
-      await testContext.rut.request(
+      await rut.request(
         HttpClientRequestMethods.get,
         testUrl,
         testQueryParams
       ).catch(response => {
-        const cachedData = testContext.rut.cache.get('GET_' + testUrl);
+        const cachedData = rut.cache.get('GET_' + testUrl);
         assert.deepEqual(cachedData, expectedCacheData);
       })
 
@@ -201,27 +201,22 @@ export const HttpRequestTests = {
       const testUrl = 'https://test.url.example/path';
       const testQueryParams = {}
       const expectedCacheData = undefined;
-      requestLightMock.xhr = options => {
-        return Promise.resolve({
+
+      when(requestLightMock.xhr(anything()))
+        .thenResolve({
           status: 200,
-          data: JSON.stringify({ "message": "cached test" })
-        })
-      };
+          responseText: JSON.stringify({ "message": "cached test" })
+        });
 
-      testContext.rut = new HttpClientRequest(
-        instance(loggerMock),
-        <HttpRequestOptions>{
-          caching: { duration: 0 },
-          http: { strictSSL: true }
-        }
-      );
+      when(cachingOptsMock.duration).thenReturn(0);
+      when(httpOptsMock.strictSSL).thenReturn(true);
 
-      await testContext.rut.request(
+      await rut.request(
         HttpClientRequestMethods.get,
         testUrl,
         testQueryParams
       ).then(response => {
-        const cachedData = testContext.rut.cache.get('GET_' + testUrl);
+        const cachedData = rut.cache.get('GET_' + testUrl);
         assert.equal(cachedData, expectedCacheData);
       })
     },

@@ -1,23 +1,26 @@
 import { ILogger } from 'core.logging';
-import { UrlHelpers } from 'core.clients';
-
-import { ProcessClientRequest } from 'infrastructure.clients';
+import { UrlHelpers, IProcessClient } from 'core.clients';
 
 import { MavenConfig } from '../mavenConfig';
 import { MavenRepository } from '../definitions/mavenRepository';
 import * as MavenXmlFactory from '../mavenXmlParserFactory';
 
-export class MvnClient extends ProcessClientRequest {
+export class MvnCli {
 
   config: MavenConfig;
 
-  constructor(config: MavenConfig, logger: ILogger) {
-    super(config.caching, logger)
+  client: IProcessClient;
+
+  logger: ILogger;
+
+  constructor(config: MavenConfig, client: IProcessClient, logger: ILogger) {
+    this.client = client;
     this.config = config;
+    this.logger = logger;
   }
 
   async fetchRepositories(cwd: string): Promise<Array<MavenRepository>> {
-    const promisedCli = super.request(
+    const promisedCli = this.client.request(
       'mvn ',
       ['help:effective-settings'],
       cwd

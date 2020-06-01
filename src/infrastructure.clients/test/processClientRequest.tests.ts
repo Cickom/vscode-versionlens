@@ -3,46 +3,44 @@ import { LoggerStub } from 'test.core.logging';
 import { ILogger } from 'core.logging';
 import { ClientResponseSource, CachingOptions, ICachingOptions } from 'core.clients'
 
-import { ProcessClientRequest } from 'infrastructure.clients'
+import { ProcessClient } from 'infrastructure.clients'
+import { ProcessSpawnStub } from './stubs/processSpawnStub';
 
-const { mock, instance, when } = require('ts-mockito');
+const { mock, instance, when, anything } = require('ts-mockito');
 
 const assert = require('assert')
-const requireMock = require('mock-require')
 
+let psMock: ProcessSpawnStub;
 let cachingMock: ICachingOptions;
 let loggerMock: ILogger;
 
 export const ProcessClientRequestTests = {
 
-  afterAll: () => requireMock.stopAll(),
-
   beforeEach: () => {
-    // reset mocks
-    requireMock.stop('@npmcli/promise-spawn');
-
     cachingMock = mock(CachingOptions)
     loggerMock = mock(LoggerStub)
+    psMock = mock(ProcessSpawnStub)
   },
 
   "requestJson": {
 
     "returns <ProcessClientResponse> when error occurs": async () => {
 
-      const promiseSpawnMock = (cmd, args, opts) => {
-        return Promise.reject({
-          code: "ENOENT",
-          message: "spawn missing ENOENT"
-        });
-      };
-      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
-
       when(cachingMock.duration).thenReturn(30000)
 
-      const rut = new ProcessClientRequest(
+      when(psMock.ps(anything(), anything(), anything()))
+        .thenReject({
+          code: "ENOENT",
+          message: "spawn missing ENOENT"
+        })
+
+      const rut = new ProcessClient(
         instance(cachingMock),
         instance(loggerMock)
       );
+
+      rut.ps = instance(psMock).ps
+
       return await rut.request(
         'missing',
         ['--ooppss'],
@@ -69,20 +67,20 @@ export const ProcessClientRequestTests = {
         rejected: false
       }
 
-      const promiseSpawnMock = (cmd, args, opts) => {
-        return Promise.resolve({
+      when(psMock.ps(anything(), anything(), anything()))
+        .thenResolve({
           code: 0,
           stdout: testResponse.data
-        });
-      };
-      requireMock('@npmcli/promise-spawn', promiseSpawnMock)
+        })
 
       when(cachingMock.duration).thenReturn(30000)
 
-      const rut = new ProcessClientRequest(
+      const rut = new ProcessClient(
         instance(cachingMock),
         instance(loggerMock)
       )
+
+      rut.ps = instance(psMock).ps
 
       await rut.request(
         'echo',
@@ -111,17 +109,15 @@ export const ProcessClientRequestTests = {
         rejected: false,
       }
 
-      const promiseSpawnMock = (cmd, args, opts) => {
-        return Promise.resolve({
+      when(psMock.ps(anything(), anything(), anything()))
+        .thenResolve({
           code: 0,
           stdout: testResponse.data
-        });
-      };
-      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
+        })
 
       when(cachingMock.duration).thenReturn(0)
 
-      const rut = new ProcessClientRequest(
+      const rut = new ProcessClient(
         instance(cachingMock),
         instance(loggerMock)
       )

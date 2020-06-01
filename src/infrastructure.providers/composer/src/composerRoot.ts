@@ -4,30 +4,27 @@ import { AwilixContainer } from 'awilix';
 // run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
+import { createJsonClient } from 'infrastructure.clients';
+
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
 
-import { ComposerVersionLensProvider } from './composerProvider';
-import { ComposerConfig } from './composerConfig';
-import { IComposerContainerMap } from './definitions/iComposerContainerMap';
 import { ComposerContributions } from './definitions/eComposerContributions';
+import { IComposerContainerMap } from './definitions/iComposerContainerMap';
+import { ComposerVersionLensProvider } from './composerProvider'
+import { ComposerConfig } from './composerConfig';
+import { ComposerClient } from './composerClient';
 
 // run-time file system imports
-const { asFunction, asClass } = require('awilix');
+const { asFunction } = require('awilix');
 
 export function composition(
   container: AwilixContainer<IComposerContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  container.register({
-
-    // logger
-    composerLogger: asFunction(logger => logger.child({ namespace: 'composer' })).singleton(),
-
-    // config
-    composerConfig: asClass(ComposerConfig).singleton(),
+  const containerMap: IComposerContainerMap = {
 
     // options
-    composerCachingOptions: asFunction(
+    composerCachingOpts: asFunction(
       extension => new CachingOptions(
         extension.config,
         ComposerContributions.Caching,
@@ -35,7 +32,7 @@ export function composition(
       )
     ).singleton(),
 
-    composerHttpOptions: asFunction(
+    composerHttpOpts: asFunction(
       extension => new HttpOptions(
         extension.config,
         ComposerContributions.Http,
@@ -43,9 +40,45 @@ export function composition(
       )
     ).singleton(),
 
-    // lens provider
-    composerProvider: asClass(ComposerVersionLensProvider).singleton(),
-  });
+    // config
+    composerConfig: asFunction(
+      (extension, composerCachingOpts, composerHttpOpts) =>
+        new ComposerConfig(extension, composerCachingOpts, composerHttpOpts)
+    ).singleton(),
+
+    // clients
+    composerJsonClient: asFunction(
+      (composerCachingOpts, composerHttpOpts, logger) =>
+        createJsonClient(
+          {
+            caching: composerCachingOpts,
+            http: composerHttpOpts
+          },
+          logger.child({ namespace: 'composer request' })
+        )
+    ).singleton(),
+
+    composerClient: asFunction(
+      (composerConfig, composerJsonClient, logger) =>
+        new ComposerClient(
+          composerConfig,
+          composerJsonClient,
+          logger.child({ namespace: 'composer client' })
+        )
+    ).singleton(),
+
+    // provider
+    composerProvider: asFunction(
+      (composerConfig, composerClient, logger) =>
+        new ComposerVersionLensProvider(
+          composerConfig,
+          composerClient,
+          logger.child({ namespace: 'composer provider' })
+        )
+    ).singleton(),
+  };
+
+  container.register(<any>containerMap)
 
   return container.cradle.composerProvider;
 }

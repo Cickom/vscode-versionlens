@@ -1,21 +1,26 @@
 // compiled run-time references
-import { ILogger } from 'core.logging';
-import { ICachingOptions, IHttpOptions } from 'core.clients';
+import { ICachingOptions, IHttpOptions, IJsonHttpClient } from 'core.clients';
 
 import { ComposerConfig } from '../composerConfig';
 import { ComposerVersionLensProvider } from '../composerProvider';
+import { ComposerClient } from '../composerClient';
 
 export interface IComposerContainerMap {
+
+  // options
+  composerCachingOpts: ICachingOptions,
+
+  composerHttpOpts: IHttpOptions,
+
   // config
   composerConfig: ComposerConfig,
 
-  // logging
-  composerLogger: ILogger,
+  // clients
+  composerJsonClient: IJsonHttpClient,
 
-  // options
-  composerCachingOptions: ICachingOptions,
-  composerHttpOptions: IHttpOptions,
+  composerClient: ComposerClient,
 
   // provider
   composerProvider: ComposerVersionLensProvider
+
 }

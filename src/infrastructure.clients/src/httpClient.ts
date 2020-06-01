@@ -1,30 +1,30 @@
 import { KeyStringDictionary } from 'core.generics';
 import { ILogger } from 'core.logging';
 import {
-  AbstractClientRequest,
+  AbstractCachedRequest,
   HttpClientResponse,
-  IHttpClientRequest,
+  IHttpClient,
   HttpClientRequestMethods,
   HttpRequestOptions,
   UrlHelpers,
 } from 'core.clients';
 
-import { RequestLightHttpResponse } from './definitions/responses';
+import { IXhrResponse } from './definitions/iXhrResponse';
 
-export class HttpClientRequest
-  extends AbstractClientRequest<number, string>
-  implements IHttpClientRequest {
+export class HttpClient extends AbstractCachedRequest<number, string>
+  implements IHttpClient {
 
   logger: ILogger;
 
-  headers: KeyStringDictionary;
-
   options: HttpRequestOptions;
 
-  constructor(logger: ILogger, options: HttpRequestOptions) {
-    super(options.caching);
-    this.logger = logger;
-    this.options = options;
+  requestLight: any;
+
+  constructor(requestOptions: HttpRequestOptions, requestLogger: ILogger) {
+    super(requestOptions.caching);
+    this.logger = requestLogger;
+    this.options = requestOptions;
+    this.requestLight = require('request-light');
   }
 
   async request(
@@ -37,20 +37,20 @@ export class HttpClientRequest
     const url = UrlHelpers.createUrl(baseUrl, query);
     const cacheKey = method + '_' + url;
 
-    if (this.cache.options.duration > 0 && this.cache.hasExpired(cacheKey) === false) {
+    if (this.cache.cachingOpts.duration > 0 &&
+      this.cache.hasExpired(cacheKey) === false) {
       const cachedResp = this.cache.get(cacheKey);
       if (cachedResp.rejected) return Promise.reject(cachedResp);
       return Promise.resolve(cachedResp);
     }
 
-    const requestLight = require('request-light');
-    return requestLight.xhr({
+    return this.requestLight.xhr({
       url,
       type: method,
       headers,
       strictSSL: this.options.http.strictSSL
     })
-      .then((response: RequestLightHttpResponse) => {
+      .then((response: IXhrResponse) => {
         return this.createCachedResponse(
           cacheKey,
           response.status,
@@ -58,7 +58,7 @@ export class HttpClientRequest
           false
         );
       })
-      .catch((response: RequestLightHttpResponse) => {
+      .catch((response: IXhrResponse) => {
         const result = this.createCachedResponse(
           cacheKey,
           response.status,

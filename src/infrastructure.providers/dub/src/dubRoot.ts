@@ -4,30 +4,28 @@ import { AwilixContainer } from 'awilix';
 // run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
+import { createJsonClient } from 'infrastructure.clients';
+
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
 
-import { DubVersionLensProvider } from './dubProvider';
-import { DubConfig } from './dubConfig';
-import { IDubContainerMap } from './definitions/iDubContainerMap';
 import { DubContributions } from './definitions/eDubContributions';
+import { IDubContainerMap } from './definitions/iDubContainerMap';
+import { DubVersionLensProvider } from './dubProvider'
+import { DubConfig } from './dubConfig';
+import { DubClient } from './dubClient';
+
 
 // run-time file system imports
-const { asFunction, asClass } = require('awilix');
+const { asFunction } = require('awilix');
 
 export function composition(
   container: AwilixContainer<IDubContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  container.register({
-
-    // logger
-    dubLogger: asFunction(logger => logger.child({ namespace: 'dub' })).singleton(),
-
-    // config
-    dubConfig: asClass(DubConfig).singleton(),
+  const containerMap: IDubContainerMap = {
 
     // options
-    dubCachingOptions: asFunction(
+    dubCachingOpts: asFunction(
       extension => new CachingOptions(
         extension.config,
         DubContributions.Caching,
@@ -35,7 +33,7 @@ export function composition(
       )
     ).singleton(),
 
-    dubHttpOptions: asFunction(
+    dubHttpOpts: asFunction(
       extension => new HttpOptions(
         extension.config,
         DubContributions.Http,
@@ -43,9 +41,45 @@ export function composition(
       )
     ).singleton(),
 
-    // lens provider
-    dubProvider: asClass(DubVersionLensProvider).singleton(),
-  });
+    // config
+    dubConfig: asFunction(
+      (extension, dubCachingOpts, dubHttpOpts) =>
+        new DubConfig(extension, dubCachingOpts, dubHttpOpts)
+    ).singleton(),
+
+    // clients
+    dubJsonClient: asFunction(
+      (dubCachingOpts, dubHttpOpts, logger) =>
+        createJsonClient(
+          {
+            caching: dubCachingOpts,
+            http: dubHttpOpts
+          },
+          logger.child({ namespace: 'dub request' })
+        )
+    ).singleton(),
+
+    dubClient: asFunction(
+      (dubConfig, dubJsonClient, logger) =>
+        new DubClient(
+          dubConfig,
+          dubJsonClient,
+          logger.child({ namespace: 'dub client' })
+        )
+    ).singleton(),
+
+    // provider
+    dubProvider: asFunction(
+      (dubConfig, dubClient, logger) =>
+        new DubVersionLensProvider(
+          dubConfig,
+          dubClient,
+          logger.child({ namespace: 'dub provider' })
+        )
+    ).singleton(),
+  };
+
+  container.register(<any>containerMap)
 
   return container.cradle.dubProvider;
 }

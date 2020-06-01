@@ -1,5 +1,5 @@
 export * from './src/clients/mavenClient'
-export * from './src/clients/mvnClient'
+export * from './src/clients/mvnCli'
 export * from './src/definitions/mavenClientData'
 export * from './src/definitions/mavenProjectProperty'
 export * from './src/definitions/mavenRepository'

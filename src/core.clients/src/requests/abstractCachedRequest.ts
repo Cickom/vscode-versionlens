@@ -1,17 +1,17 @@
 import { ExpiryCacheMap } from '../caching/expiryCacheMap';
 
-import { ICachingOptions } from '../definitions/iOptions';
+import { ICachingOptions } from "../definitions/iCachingOptions";
 import {
   ClientResponse,
   ClientResponseSource
 } from "../definitions/clientResponses";
 
-export abstract class AbstractClientRequest<TStatus, TData> {
+export abstract class AbstractCachedRequest<TStatus, TData> {
 
   cache: ExpiryCacheMap<ClientResponse<TStatus, TData>>;
 
-  constructor(options: ICachingOptions) {
-    this.cache = new ExpiryCacheMap(options);
+  constructor(cachingOpts: ICachingOptions) {
+    this.cache = new ExpiryCacheMap(cachingOpts);
   }
 
   createCachedResponse(
@@ -21,7 +21,7 @@ export abstract class AbstractClientRequest<TStatus, TData> {
     rejected: boolean = false,
     source: ClientResponseSource = ClientResponseSource.remote
   ): ClientResponse<TStatus, TData> {
-    const cacheEnabled = this.cache.options.duration > 0;
+    const cacheEnabled = this.cache.cachingOpts.duration > 0;
 
     if (cacheEnabled) {
       //  cache reponse (don't return, keep immutable)

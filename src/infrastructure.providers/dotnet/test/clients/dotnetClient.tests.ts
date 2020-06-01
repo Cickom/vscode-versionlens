@@ -9,42 +9,45 @@ import {
   ICachingOptions,
   CachingOptions,
   IHttpOptions,
-  HttpOptions
+  HttpOptions,
+  IProcessClient
 } from 'core.clients';
 
 import {
   DotNetConfig,
-  DotNetClient,
+  DotNetCli,
   INugetOptions,
   NugetOptions
 } from 'infrastructure.providers/dotnet';
 
-import { VersionLensExtension } from 'presentation.extension';
+import { ProcessClient } from 'infrastructure.clients';
 
-
-const { mock, instance, when } = require('ts-mockito');
+const { mock, instance, when, anything } = require('ts-mockito');
 
 const assert = require('assert');
-const requireMock = require('mock-require');
 
-let extensionMock: VersionLensExtension;
 let cacheOptsMock: ICachingOptions;
 let httpOptsMock: IHttpOptions;
 let nugetOptsMock: INugetOptions;
+let configMock: DotNetConfig;
 let loggerMock: ILogger;
+
+let clientMock: IProcessClient;
 
 export const DotnetClientRequestTests = {
 
   beforeEach: () => {
-    extensionMock = mock(VersionLensExtension);
     cacheOptsMock = mock(CachingOptions);
     httpOptsMock = mock(HttpOptions);
     nugetOptsMock = mock(NugetOptions);
+    configMock = mock(DotNetConfig);
     loggerMock = mock(LoggerStub)
-  },
+    clientMock = mock(ProcessClient)
 
-  // reset all require mocks
-  afterEach: () => requireMock.stop('@npmcli/promise-spawn'),
+    when(configMock.caching).thenReturn(instance(cacheOptsMock))
+    when(configMock.http).thenReturn(instance(httpOptsMock))
+    when(configMock.nuget).thenReturn(instance(nugetOptsMock))
+  },
 
   "fetchSources": {
 
@@ -80,26 +83,16 @@ export const DotnetClientRequestTests = {
         },
       ]
 
-      let promiseSpawnMock = (cmd, args, opts) => {
-        return Promise.resolve({
-          code: 0,
-          stdout: Fixtures.enabledSources
-        });
-      };
-      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
+      when(clientMock.request(anything(), anything(), anything()))
+        .thenResolve({
+          data: Fixtures.enabledSources
+        })
 
       when(nugetOptsMock.sources).thenReturn(testFeeds)
 
-      // setup test feeds
-      const config = new DotNetConfig(
-        instance(extensionMock),
-        instance(cacheOptsMock),
-        instance(httpOptsMock),
-        instance(nugetOptsMock),
-      )
-
-      const cut = new DotNetClient(
-        config,
+      const cut = new DotNetCli(
+        instance(configMock),
+        instance(clientMock),
         instance(loggerMock)
       );
       return cut.fetchSources('.')
@@ -112,28 +105,22 @@ export const DotnetClientRequestTests = {
     "return 0 items when no sources are enabled": async () => {
       const testFeeds = [];
 
-      let promiseSpawnMock = (cmd, args, opts) => {
-        return Promise.resolve({
-          code: 0,
-          stdout: Fixtures.disabledSource
-        });
-      };
-      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
+      when(clientMock.request(
+        anything(),
+        anything(),
+        anything()
+      )).thenResolve({
+        data: Fixtures.disabledSource
+      })
 
       when(nugetOptsMock.sources).thenReturn(testFeeds)
 
-      // setup test feeds
-      const config = new DotNetConfig(
-        instance(extensionMock),
-        instance(cacheOptsMock),
-        instance(httpOptsMock),
-        instance(nugetOptsMock),
-      )
-
-      const cut = new DotNetClient(
-        config,
+      const cut = new DotNetCli(
+        instance(configMock),
+        instance(clientMock),
         instance(loggerMock)
       );
+
       return cut.fetchSources('.')
         .then(actualSources => {
           assert.equal(actualSources.length, 0);
@@ -150,24 +137,19 @@ export const DotnetClientRequestTests = {
         },
       ]
 
-      let promiseSpawnMock = (cmd, args, opts) => {
-        return Promise.resolve({
-          code: 0,
-          stdout: Fixtures.enabledAndDisabledSources
-        });
-      };
-      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
+      when(clientMock.request(
+        anything(),
+        anything(),
+        anything()
+      )).thenResolve({
+        data: Fixtures.enabledAndDisabledSources
+      })
 
-      // setup test feeds
-      const config = new DotNetConfig(
-        instance(extensionMock),
-        instance(cacheOptsMock),
-        instance(httpOptsMock),
-        instance(nugetOptsMock),
-      )
+      when(nugetOptsMock.sources).thenReturn([])
 
-      const cut = new DotNetClient(
-        config,
+      const cut = new DotNetCli(
+        instance(configMock),
+        instance(clientMock),
         instance(loggerMock)
       );
 
@@ -178,24 +160,21 @@ export const DotnetClientRequestTests = {
     },
 
     "returns fallback url on error": async () => {
+      const expectedFallbackNugetSource = 'http://fallbackurl.test.net'
 
-      let promiseSpawnMock = (cmd, args, opts) => {
-        return Promise.reject({
-          code: '0',
-          stdout: Fixtures.invalidSources
-        });
-      };
-      requireMock('@npmcli/promise-spawn', promiseSpawnMock);
+      when(clientMock.request(
+        anything(),
+        anything(),
+        anything()
+      )).thenReject({
+        data: Fixtures.invalidSources
+      })
 
-      const config = new DotNetConfig(
-        instance(extensionMock),
-        instance(cacheOptsMock),
-        instance(httpOptsMock),
-        instance(nugetOptsMock),
-      );
+      when(configMock.fallbackNugetSource).thenReturn(expectedFallbackNugetSource)
 
-      const cut = new DotNetClient(
-        config,
+      const cut = new DotNetCli(
+        instance(configMock),
+        instance(clientMock),
         instance(loggerMock)
       );
 
@@ -203,7 +182,7 @@ export const DotnetClientRequestTests = {
         enabled: true,
         machineWide: false,
         protocol: 'https:',
-        url: config.fallbackNugetSource,
+        url: expectedFallbackNugetSource,
       }
 
       return cut.fetchSources('.')

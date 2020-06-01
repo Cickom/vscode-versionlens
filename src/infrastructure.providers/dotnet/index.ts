@@ -1,4 +1,4 @@
-export * from './src/clients/dotnetClient'
+export * from './src/clients/dotnetCli'
 export * from './src/clients/nugetPackageClient'
 export * from './src/clients/nugetResourceClient'
 

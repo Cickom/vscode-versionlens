@@ -13,48 +13,37 @@ import {
 import {
   NpmConfig,
   PacoteClient,
-  GitHubOptions
+  GitHubOptions,
+  IPacote
 } from 'infrastructure.providers/npm'
 
 import { VersionLensExtension } from 'presentation.extension';
 
 import Fixtures from './pacoteClient.fixtures'
+import { PacoteStub } from '../stubs/pacoteStub';
 
-const { mock, instance } = require('ts-mockito');
+const { mock, instance, when, anything, capture } = require('ts-mockito');
 
 const assert = require('assert')
-const requireMock = require('mock-require')
 const npa = require('npm-package-arg');
 
-let pacoteMock = null
-
-let extensionMock: VersionLensExtension;
-let cacheOptsMock: ICachingOptions;
-let httpOptsMock: IHttpOptions;
+let cachingOptsMock: ICachingOptions;
 let githubOptsMock: GitHubOptions;
 let loggerMock: ILogger;
+let configMock: NpmConfig;
+let pacoteMock: IPacote;
 
 export default {
 
-  beforeAll: () => {
-    pacoteMock = {
-      packument: {}
-    }
-
-    requireMock('pacote', pacoteMock)
-  },
-
-  afterAll: () => requireMock.stopAll(),
-
   beforeEach: () => {
-    // mock defaults
-    pacoteMock.packument = (npaResult, opts) => { }
-
-    extensionMock = mock(VersionLensExtension);
-    cacheOptsMock = mock(CachingOptions);
-    httpOptsMock = mock(HttpOptions);
     githubOptsMock = mock(GitHubOptions);
-    loggerMock = mock(LoggerStub);
+    cachingOptsMock = mock(CachingOptions)
+    configMock = mock(NpmConfig)
+    loggerMock = mock(LoggerStub)
+    pacoteMock = mock(PacoteStub)
+
+    when(configMock.caching).thenReturn(instance(cachingOptsMock))
+    when(configMock.github).thenReturn(instance(githubOptsMock))
   },
 
   'fetchPackage': {
@@ -78,17 +67,16 @@ export default {
         testRequest.package.path
       );
 
-      // setup initial call
-      pacoteMock.packument = (npaResult, opts) => Promise.resolve(Fixtures.packumentRegistryRange);
+      when(pacoteMock.packument(anything(), anything()))
+        .thenResolve(Fixtures.packumentRegistryRange)
+
       const cut = new PacoteClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+        instance(configMock),
         instance(loggerMock)
-      );
+      )
+
+      cut.pacote = instance(pacoteMock)
+
       return cut.fetchPackage(testRequest, npaSpec)
         .then((actual) => {
           assert.equal(actual.source, 'registry')
@@ -117,17 +105,16 @@ export default {
         testRequest.package.path
       );
 
-      // setup initial call
-      pacoteMock.packument = (npaResult, opts) => Promise.resolve(Fixtures.packumentRegistryVersion);
+      when(pacoteMock.packument(anything(), anything()))
+        .thenResolve(Fixtures.packumentRegistryVersion)
+
       const cut = new PacoteClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+        instance(configMock),
         instance(loggerMock)
-      );
+      )
+
+      cut.pacote = instance(pacoteMock)
+
       return cut.fetchPackage(testRequest, npaSpec)
         .then((actual) => {
           assert.equal(actual.source, 'registry')
@@ -155,19 +142,16 @@ export default {
         testRequest.package.path
       );
 
-      // setup initial call
-      pacoteMock.packument = (npaResult, opts) =>
-        Promise.resolve(Fixtures.packumentCappedToLatestTaggedVersion);
+      when(pacoteMock.packument(anything(), anything()))
+        .thenResolve(Fixtures.packumentCappedToLatestTaggedVersion)
 
       const cut = new PacoteClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+        instance(configMock),
         instance(loggerMock)
-      );
+      )
+
+      cut.pacote = instance(pacoteMock)
+
       return cut.fetchPackage(testRequest, npaSpec)
         .then((actual) => {
           assert.deepEqual(actual.suggestions, [{
@@ -196,17 +180,16 @@ export default {
         testRequest.package.path
       );
 
-      // setup initial call
-      pacoteMock.packument = (npaResult, opts) => Promise.resolve(Fixtures.packumentRegistryAlias);
+      when(pacoteMock.packument(anything(), anything()))
+        .thenResolve(Fixtures.packumentRegistryAlias)
+
       const cut = new PacoteClient(
-        new NpmConfig(
-          instance(extensionMock),
-          instance(cacheOptsMock),
-          instance(httpOptsMock),
-          instance(githubOptsMock),
-        ),
+        instance(configMock),
         instance(loggerMock)
-      );
+      )
+
+      cut.pacote = instance(pacoteMock)
+
       return cut.fetchPackage(testRequest, npaSpec)
         .then((actual) => {
           assert.equal(actual.source, 'registry')

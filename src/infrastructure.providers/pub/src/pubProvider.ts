@@ -3,32 +3,31 @@ import * as VsCodeTypes from 'vscode';
 
 // imports
 import { ILogger } from 'core.logging';
-import { extractPackageDependenciesFromYaml, RequestFactory } from 'core.packages';
+import {
+  extractPackageDependenciesFromYaml,
+  RequestFactory
+} from 'core.packages';
 
-import { AbstractVersionLensProvider, VersionLensFetchResponse } from 'presentation.providers';
+import {
+  AbstractVersionLensProvider,
+  VersionLensFetchResponse
+} from 'presentation.providers';
 
 import { PubConfig } from './pubConfig';
 import { PubClient } from './pubClient';
 import { pubReplaceVersion } from './pubUtils';
 
-export class PubVersionLensProvider
-  extends AbstractVersionLensProvider<PubConfig> {
+export class PubVersionLensProvider extends AbstractVersionLensProvider<PubConfig> {
 
-  pubClient: PubClient;
+  client: PubClient;
 
-  constructor(pubConfig: PubConfig, pubLogger: ILogger) {
-    super(pubConfig, pubLogger);
+  logger: ILogger
 
-    const requestOptions = {
-      caching: pubConfig.caching,
-      http: pubConfig.http
-    };
+  constructor(config: PubConfig, client: PubClient, logger: ILogger) {
+    super(config, logger);
+    this.client = client;
+    this.logger = logger;
 
-    this.pubClient = new PubClient(
-      pubConfig,
-      requestOptions,
-      pubLogger.child({ namespace: 'pub pkg client' })
-    );
   }
 
   async fetchVersionLenses(
@@ -56,7 +55,7 @@ export class PubVersionLensProvider
 
     return RequestFactory.executeDependencyRequests(
       packagePath,
-      this.pubClient,
+      this.client,
       packageDependencies,
       context,
     );

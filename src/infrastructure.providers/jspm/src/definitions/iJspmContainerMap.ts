@@ -1,24 +1,35 @@
 // compiled run-time references
-import { ILogger } from 'core.logging';
-
-import { ICachingOptions, IHttpOptions } from 'core.clients';
-
-import { GitHubOptions } from 'infrastructure.providers/npm';
+import { ICachingOptions, IHttpOptions, IJsonHttpClient } from 'core.clients';
 
 import { JspmConfig } from '../jspmConfig';
-import { JspmVersionLensProvider } from '../jspmProvider';
+import { JspmVersionLensProvider } from '../jspmProvider'
+import {
+  GitHubOptions,
+  PacoteClient,
+  GitHubClient,
+  NpmPackageClient
+} from 'infrastructure.providers/npm';
 
 export interface IJspmContainerMap {
+
   // config
   jspmConfig: JspmConfig,
 
-  // logging
-  jspmLogger: ILogger,
-
   // options
-  jspmCachingOptions: ICachingOptions,
-  jspmHttpOptions: IHttpOptions,
-  jspmGitHubOptions: GitHubOptions,
+  jspmCachingOpts: ICachingOptions,
+
+  jspmHttpOpts: IHttpOptions,
+
+  jspmGitHubOpts: GitHubOptions,
+
+  // clients
+  githubJsonClient: IJsonHttpClient,
+
+  pacoteClient: PacoteClient,
+
+  githubClient: GitHubClient,
+
+  jspmClient: NpmPackageClient,
 
   // provider
   jspmProvider: JspmVersionLensProvider

@@ -28,13 +28,12 @@ export class MavenConfig extends AbstractProviderConfig {
 
   constructor(
     extension: VersionLensExtension,
-    mavenCachingOptions: ICachingOptions,
-    mavenHttpOptions: IHttpOptions
+    caching: ICachingOptions,
+    http: IHttpOptions
   ) {
     super(extension);
-
-    this.caching = mavenCachingOptions;
-    this.http = mavenHttpOptions;
+    this.caching = caching;
+    this.http = http;
   }
 
   get dependencyProperties(): Array<string> {

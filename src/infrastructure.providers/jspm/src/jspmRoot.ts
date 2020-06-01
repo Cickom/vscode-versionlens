@@ -4,31 +4,25 @@ import { AwilixContainer } from 'awilix';
 // run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
-import { NpmContributions, GitHubOptions } from 'infrastructure.providers/npm';
-
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
 
-import { JspmVersionLensProvider } from './jspmProvider';
 import { JspmConfig } from './jspmConfig';
+import { JspmVersionLensProvider } from './jspmProvider'
 import { IJspmContainerMap } from './definitions/iJspmContainerMap';
+import { createJsonClient } from 'infrastructure.clients';
+import { NpmContributions, PacoteClient, NpmPackageClient, GitHubClient, GitHubOptions } from 'infrastructure.providers/npm';
 
 // run-time file system imports
-const { asFunction, asClass } = require('awilix');
+const { asFunction } = require('awilix');
 
 export function composition(
   container: AwilixContainer<IJspmContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  container.register({
-
-    // logger
-    jspmLogger: asFunction(logger => logger.child({ namespace: 'jspm' })).singleton(),
-
-    // config
-    jspmConfig: asClass(JspmConfig).singleton(),
+  const containerMap: IJspmContainerMap = {
 
     // options
-    jspmCachingOptions: asFunction(
+    jspmCachingOpts: asFunction(
       extension => new CachingOptions(
         extension.config,
         NpmContributions.Caching,
@@ -36,7 +30,7 @@ export function composition(
       )
     ).singleton(),
 
-    jspmHttpOptions: asFunction(
+    jspmHttpOpts: asFunction(
       extension => new HttpOptions(
         extension.config,
         NpmContributions.Http,
@@ -44,7 +38,7 @@ export function composition(
       )
     ).singleton(),
 
-    jspmGitHubOptions: asFunction(
+    jspmGitHubOpts: asFunction(
       extension => new GitHubOptions(
         extension.config,
         NpmContributions.Github,
@@ -52,9 +46,64 @@ export function composition(
       )
     ).singleton(),
 
-    // lens provider
-    jspmProvider: asClass(JspmVersionLensProvider).singleton(),
-  });
+    // config
+    jspmConfig: asFunction(
+      (extension, jspmCachingOpts, jspmHttpOpts, jspmGitHubOpts) =>
+        new JspmConfig(extension, jspmCachingOpts, jspmHttpOpts, jspmGitHubOpts)
+    ).singleton(),
+
+    // clients
+    githubJsonClient: asFunction(
+      (jspmCachingOpts, jspmHttpOpts, logger) =>
+        createJsonClient(
+          {
+            caching: jspmCachingOpts,
+            http: jspmHttpOpts
+          },
+          logger.child({ namespace: 'jspm request' })
+        )
+    ).singleton(),
+
+    githubClient: asFunction(
+      (jspmConfig, githubJsonClient, logger) =>
+        new GitHubClient(
+          jspmConfig,
+          githubJsonClient,
+          logger.child({ namespace: 'jspm github' })
+        )
+    ).singleton(),
+
+    pacoteClient: asFunction(
+      (jspmConfig, logger) =>
+        new PacoteClient(
+          jspmConfig,
+          logger.child({ namespace: 'pacote client' })
+        )
+    ).singleton(),
+
+    jspmClient: asFunction(
+      (jspmConfig, githubClient, pacoteClient, logger) =>
+        new NpmPackageClient(
+          jspmConfig,
+          pacoteClient,
+          githubClient,
+          logger.child({ namespace: 'jspm client' })
+        )
+    ).singleton(),
+
+    // provider
+    jspmProvider: asFunction(
+      (jspmConfig, jspmClient, logger) =>
+        new JspmVersionLensProvider(
+          jspmConfig,
+          jspmClient,
+          logger.child({ namespace: 'jspm provider' })
+        )
+    ).singleton(),
+
+  };
+
+  container.register(<any>containerMap);
 
   return container.cradle.jspmProvider;
 }
