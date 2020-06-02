@@ -28,18 +28,17 @@ export const ProcessClientRequestTests = {
 
       when(cachingMock.duration).thenReturn(30000)
 
-      when(psMock.ps(anything(), anything(), anything()))
+      when(psMock.promiseSpawn(anything(), anything(), anything()))
         .thenReject({
           code: "ENOENT",
           message: "spawn missing ENOENT"
         })
 
       const rut = new ProcessClient(
+        instance(psMock).promiseSpawn,
         instance(cachingMock),
         instance(loggerMock)
       );
-
-      rut.ps = instance(psMock).ps
 
       return await rut.request(
         'missing',
@@ -67,7 +66,7 @@ export const ProcessClientRequestTests = {
         rejected: false
       }
 
-      when(psMock.ps(anything(), anything(), anything()))
+      when(psMock.promiseSpawn(anything(), anything(), anything()))
         .thenResolve({
           code: 0,
           stdout: testResponse.data
@@ -76,11 +75,10 @@ export const ProcessClientRequestTests = {
       when(cachingMock.duration).thenReturn(30000)
 
       const rut = new ProcessClient(
+        instance(psMock).promiseSpawn,
         instance(cachingMock),
         instance(loggerMock)
       )
-
-      rut.ps = instance(psMock).ps
 
       await rut.request(
         'echo',
@@ -109,7 +107,7 @@ export const ProcessClientRequestTests = {
         rejected: false,
       }
 
-      when(psMock.ps(anything(), anything(), anything()))
+      when(psMock.promiseSpawn(anything(), anything(), anything()))
         .thenResolve({
           code: 0,
           stdout: testResponse.data
@@ -118,6 +116,7 @@ export const ProcessClientRequestTests = {
       when(cachingMock.duration).thenReturn(0)
 
       const rut = new ProcessClient(
+        instance(psMock).promiseSpawn,
         instance(cachingMock),
         instance(loggerMock)
       )

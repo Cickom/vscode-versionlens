@@ -1,13 +1,13 @@
-import { TProcessSpawnOptions, TProcessSpawnResult } from "infrastructure.clients";
+import { TPromiseSpawnOptions, TPromiseSpawnResult } from "infrastructure.clients";
 
 export class ProcessSpawnStub {
 
-  ps(
+  promiseSpawn(
     cmd: string,
     args?: Array<string>,
-    opts?: TProcessSpawnOptions,
+    opts?: TPromiseSpawnOptions,
     // extra?: any
-  ): Promise<TProcessSpawnResult> {
+  ): Promise<TPromiseSpawnResult> {
     return Promise.resolve() as any;
   }
 

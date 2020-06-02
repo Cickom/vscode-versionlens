@@ -11,6 +11,9 @@ import {
 
 import { IXhrResponse } from './definitions/iXhrResponse';
 
+
+import { XHRRequest } from 'request-light'
+
 export class HttpClient extends AbstractCachedRequest<number, string>
   implements IHttpClient {
 
@@ -18,13 +21,13 @@ export class HttpClient extends AbstractCachedRequest<number, string>
 
   options: HttpRequestOptions;
 
-  requestLight: any;
+  xhr: XHRRequest;
 
-  constructor(requestOptions: HttpRequestOptions, requestLogger: ILogger) {
+  constructor(xhr: XHRRequest, requestOptions: HttpRequestOptions, requestLogger: ILogger) {
     super(requestOptions.caching);
     this.logger = requestLogger;
     this.options = requestOptions;
-    this.requestLight = require('request-light');
+    this.xhr = xhr;
   }
 
   async request(
@@ -44,7 +47,7 @@ export class HttpClient extends AbstractCachedRequest<number, string>
       return Promise.resolve(cachedResp);
     }
 
-    return this.requestLight.xhr({
+    return this.xhr({
       url,
       type: method,
       headers,

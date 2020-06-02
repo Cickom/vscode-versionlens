@@ -91,17 +91,12 @@ module.exports = function (env, argv) {
         area => {
           const areaFullName = `${areaPrefix}${area.areaName}`;
           const areaFullPath = path.resolve(__dirname, relativePath, area.areaPath);
-          const indexPath = path.resolve(areaFullPath, 'index.ts');
           const indexTestPath = path.resolve(areaFullPath, 'index.test.ts');
 
-          // if (fs.existsSync(indexPath)) {
           areaAliases[areaFullName] = areaFullPath;
-          // }
-
           if (test && fs.existsSync(indexTestPath)) {
             areaAliases['test.' + areaFullName] = indexTestPath;
           }
-
         }
       )
 

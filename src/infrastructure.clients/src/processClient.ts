@@ -7,19 +7,19 @@ import {
 } from 'core.clients';
 import { ILogger } from 'core.logging';
 
-import { IProcessSpawnFn } from './definitions/iProcessSpawnFn';
+import { IPromiseSpawnFn } from './definitions/iPromiseSpawn';
 
 export class ProcessClient extends AbstractCachedRequest<string, string>
   implements IProcessClient {
 
-  ps: IProcessSpawnFn;
+  promiseSpawn: IPromiseSpawnFn;
 
   logger: ILogger;
 
-  constructor(processOpts: ICachingOptions, processLogger: ILogger) {
+  constructor(promiseSpawnFn: IPromiseSpawnFn, processOpts: ICachingOptions, processLogger: ILogger) {
     super(processOpts);
     this.logger = processLogger;
-    this.ps = require('@npmcli/promise-spawn')
+    this.promiseSpawn = promiseSpawnFn;
   }
 
   async request(
@@ -39,7 +39,7 @@ export class ProcessClient extends AbstractCachedRequest<string, string>
 
     this.logger.debug('executing - %s', cacheKey);
 
-    return this.ps(cmd, args, { cwd, stdioString: true })
+    return this.promiseSpawn(cmd, args, { cwd, stdioString: true })
       .then(result => {
         return this.createCachedResponse(
           cacheKey,

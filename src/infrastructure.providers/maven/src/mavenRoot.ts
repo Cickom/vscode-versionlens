@@ -10,7 +10,7 @@ import { MavenContributions } from './definitions/eMavenContributions';
 import { IMavenContainerMap } from './definitions/iMavenContainerMap';
 import { MvnCli } from './clients/mvnCli';
 import { MavenClient } from './clients/mavenClient';
-import { createHttpClient, ProcessClient } from 'infrastructure.clients';
+import { createHttpClient, ProcessClient, createProcessClient } from 'infrastructure.clients';
 
 export function composition(
   container: AwilixContainer<IMavenContainerMap>
@@ -48,7 +48,7 @@ export function composition(
     // cli
     mvnProcess: asFunction(
       (mavenCachingOpts, logger) =>
-        new ProcessClient(
+        createProcessClient(
           mavenCachingOpts,
           logger.child({ namespace: 'maven mvn process' })
         )

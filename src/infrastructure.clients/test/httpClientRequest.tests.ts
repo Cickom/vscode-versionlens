@@ -43,13 +43,13 @@ export const HttpRequestTests = {
     requestLightMock = mock(RequestLightStub);
 
     rut = new HttpClient(
+      instance(requestLightMock).xhr,
       <HttpRequestOptions>{
         caching: instance(cachingOptsMock),
         http: instance(httpOptsMock)
       },
       instance(loggerMock)
     );
-    rut.requestLight = instance(requestLightMock)
 
     when(cachingOptsMock.duration).thenReturn(30000);
     when(httpOptsMock.strictSSL).thenReturn(true);
@@ -75,6 +75,7 @@ export const HttpRequestTests = {
         when(httpOptsMock.strictSSL).thenReturn(test.testStrictSSL);
 
         const rut = new HttpClient(
+          instance(requestLightMock).xhr,
           <HttpRequestOptions>{
             caching: instance(cachingOptsMock),
             http: instance(httpOptsMock)
@@ -82,7 +83,6 @@ export const HttpRequestTests = {
           instance(loggerMock)
         );
 
-        rut.requestLight = instance(requestLightMock)
         await rut.request(HttpClientRequestMethods.get, 'anywhere')
           .then(() => {
             const [actualOpts] = capture(requestLightMock.xhr).byCallIndex(testIndex);

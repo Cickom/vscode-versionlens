@@ -10,7 +10,7 @@ import { HttpClient } from "./httpClient";
 export function createHttpClient(
   options: HttpRequestOptions, logger: ILogger
 ): IHttpClient {
-  return new HttpClient(options, logger);
+  return new HttpClient(require('request-light').xhr, options, logger);
 }
 
 export function createJsonClient(

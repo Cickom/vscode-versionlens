@@ -1,8 +1,7 @@
-// design-time references
 import { AwilixContainer, asFunction } from 'awilix';
 
 import { CachingOptions, HttpOptions } from 'core.clients';
-
+import { ProcessClient, createJsonClient, createProcessClient } from 'infrastructure.clients';
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
 
 import { IDotNetContainerMap } from './definitions/iDotNetContainerMap';
@@ -13,7 +12,6 @@ import { NugetOptions } from './options/nugetOptions';
 import { DotNetCli } from './clients/dotnetCli';
 import { NuGetResourceClient } from './clients/nugetResourceClient';
 import { NuGetPackageClient } from './clients/nugetPackageClient';
-import { ProcessClient, createJsonClient } from 'infrastructure.clients';
 
 export function composition(
   container: AwilixContainer<IDotNetContainerMap>
@@ -59,7 +57,7 @@ export function composition(
     // cli
     dotnetProcess: asFunction(
       (dotnetCachingOpts, logger) =>
-        new ProcessClient(
+        createProcessClient(
           dotnetCachingOpts,
           logger.child({ namespace: 'dotnet process' })
         )

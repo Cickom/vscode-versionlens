@@ -1,10 +1,10 @@
-export type TProcessSpawnOptions = {
+export type TPromiseSpawnOptions = {
   cwd?: string,
   stdioString?: boolean,
   stdio?: string
 }
 
-export type TProcessSpawnResult = {
+export type TPromiseSpawnResult = {
   code: any,
   stdout: any,
   stderr: any,
@@ -12,11 +12,11 @@ export type TProcessSpawnResult = {
   extra: any
 }
 
-export interface IProcessSpawnFn {
+export interface IPromiseSpawnFn {
   (
     cmd: string,
     args?: Array<string>,
-    opts?: TProcessSpawnOptions,
+    opts?: TPromiseSpawnOptions,
     extra?: any
-  ): Promise<TProcessSpawnResult>
+  ): Promise<TPromiseSpawnResult>
 }
