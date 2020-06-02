@@ -1,8 +1,5 @@
 {
   "extends": "../tsconfig.json",
-  "exclude": [
-    "../src/activate.ts"
-  ],
   "include": [
     "../src/infrastructure.providers/**/index.ts",
   ]

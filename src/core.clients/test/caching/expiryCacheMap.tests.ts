@@ -1,4 +1,4 @@
-import { delay } from 'test.core.testing';
+import { delay } from 'infrastructure.testing';
 
 import { ExpiryCacheMap, ICachingOptions } from 'core.clients';
 

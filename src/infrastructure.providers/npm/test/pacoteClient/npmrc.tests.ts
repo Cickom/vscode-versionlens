@@ -1,4 +1,4 @@
-import { testPath } from 'test.core.testing';
+import { sourcePath } from 'infrastructure.testing';
 import { LoggerStub } from 'test.core.logging';
 
 import { ILogger } from 'core.logging';
@@ -36,8 +36,8 @@ export default {
 
     'uses npmrc registry': async () => {
       const packagePath = path.join(
-        testPath,
-        './src/infrastructure.providers/npm/test/fixtures/config'
+        sourcePath,
+        'infrastructure.providers/npm/test/fixtures/config'
       );
 
       const testRequest: any = {
