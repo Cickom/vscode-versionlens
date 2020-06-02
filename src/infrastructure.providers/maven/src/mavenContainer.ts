@@ -12,7 +12,7 @@ import { MvnCli } from './clients/mvnCli';
 import { MavenClient } from './clients/mavenClient';
 import { createHttpClient, ProcessClient, createProcessClient } from 'infrastructure.clients';
 
-export function composition(
+export function configureContainer(
   container: AwilixContainer<IMavenContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 

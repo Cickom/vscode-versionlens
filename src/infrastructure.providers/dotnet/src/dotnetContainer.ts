@@ -13,7 +13,7 @@ import { DotNetCli } from './clients/dotnetCli';
 import { NuGetResourceClient } from './clients/nugetResourceClient';
 import { NuGetPackageClient } from './clients/nugetPackageClient';
 
-export function composition(
+export function configureContainer(
   container: AwilixContainer<IDotNetContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 

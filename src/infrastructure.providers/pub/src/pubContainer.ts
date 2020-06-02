@@ -11,7 +11,7 @@ import { PubConfig } from './pubConfig';
 import { PubClient } from './pubClient';
 import { createJsonClient } from 'infrastructure.clients';
 
-export function composition(
+export function configureContainer(
   container: AwilixContainer<IPubContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 

@@ -1,7 +1,12 @@
+import { languages, Disposable } from 'vscode';
+
 import { KeyDictionary } from 'core.generics'
+import { ILogger } from 'core.logging';
+
 import { AbstractVersionLensProvider } from 'presentation.providers'
 import { IProviderConfig } from './definitions/iProviderConfig';
-import { ILogger } from 'core.logging';
+import { AwilixContainer } from 'awilix';
+import { IContainerMap } from 'presentation.extension';
 
 export class ProviderRegistry {
 
@@ -93,4 +98,54 @@ export class ProviderRegistry {
 function matchesFilename(filename: string, pattern: string): boolean {
   const minimatch = require('minimatch');
   return minimatch(filename, pattern);
+}
+
+export async function createProviderRegistry(
+  container: AwilixContainer<IContainerMap>,
+  subscriptions: Array<Disposable>,
+  logger: ILogger
+): Promise<ProviderRegistry> {
+
+  const registry = new ProviderRegistry(logger);
+
+  const providerNames = registry.providerNames;
+
+  logger.debug('Registering providers %o', providerNames.join(', '));
+
+  const promised = providerNames.map(
+    providerName => {
+      return import(`infrastructure.providers/${providerName}/index`)
+        .then(module => {
+
+          logger.debug('Activating container scope for %s', providerName);
+
+          // create a container scope for the provider
+          const scopeContainer = container.createScope();
+          const provider = module.configureContainer(scopeContainer);
+
+          // register the provider
+          registry.register(provider);
+
+          // register the command with vscode
+          const sub = languages.registerCodeLensProvider(
+            provider.config.options.selector,
+            provider
+          );
+
+          // give vscode the command disposable
+          subscriptions.push(sub);
+        })
+        .catch(error => {
+          logger.error(
+            'Could not register provider %s. Reason: %O',
+            providerName,
+            error,
+          );
+        });
+    }
+  );
+
+  await Promise.all(promised);
+
+  return registry;
 }

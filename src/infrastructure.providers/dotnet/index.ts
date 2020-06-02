@@ -13,4 +13,4 @@ export * from './src/dotnetXmlParserFactory'
 
 export * from './src/options/nugetOptions'
 
-export * from './src/dotnetRoot'
+export * from './src/dotnetContainer'

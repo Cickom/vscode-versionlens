@@ -12,7 +12,7 @@ import { ComposerVersionLensProvider } from './composerProvider'
 import { ComposerConfig } from './composerConfig';
 import { ComposerClient } from './composerClient';
 
-export function composition(
+export function configureContainer(
   container: AwilixContainer<IComposerContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 

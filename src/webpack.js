@@ -11,7 +11,7 @@ module.exports = function (env, argv) {
 
   const entry = test ?
     path.resolve(__dirname, '../test/runner.ts') :
-    path.resolve(__dirname, './root.ts');
+    path.resolve(__dirname, './activate.ts');
 
   const tsconfigFile = path.resolve(
     __dirname,
@@ -50,7 +50,6 @@ module.exports = function (env, argv) {
         }]
       }]
     },
-
 
     devtool: 'source-map',
 
@@ -118,7 +117,10 @@ module.exports = function (env, argv) {
 
     log("[debug] Generated externals", externals)
 
-    return externals
+    return [
+      externals,
+      /package\.json$/,
+    ]
   }
 
   function getNodeModulesNames() {

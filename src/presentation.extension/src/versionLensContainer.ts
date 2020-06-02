@@ -1,9 +1,4 @@
-import {
-  workspace,
-  window,
-  ExtensionContext,
-  languages
-} from 'vscode';
+import { workspace, window, ExtensionContext } from 'vscode';
 
 import {
   createContainer,
@@ -25,11 +20,14 @@ import {
   registerSuggestionCommands,
   TextEditorEvents
 } from 'presentation.extension';
-import { ProviderRegistry } from 'presentation.providers';
 
-import { IContainerMap } from './container';
+import { createProviderRegistry } from 'presentation.providers';
 
-export async function activate(context: ExtensionContext) {
+import { IContainerMap } from './definitions/iContainerMap';
+
+export async function configureContainer(
+  context: ExtensionContext
+): Promise<AwilixContainer<IContainerMap>> {
 
   const container: AwilixContainer<IContainerMap> = createContainer({
     injectionMode: InjectionMode.CLASSIC
@@ -37,7 +35,7 @@ export async function activate(context: ExtensionContext) {
 
   const containerMap = {
 
-    extensionName: asValue(VersionLensExtension.extensionName.toLowerCase()),
+    extensionName: asValue(VersionLensExtension.extensionName),
 
     // vscode abstractions
     vscodeWorkspace: asValue(workspace),
@@ -45,7 +43,7 @@ export async function activate(context: ExtensionContext) {
     // maps to the vscode configuration
     rootConfig: asFunction(
       (vscodeWorkspace, extensionName) =>
-        new VsCodeConfig(vscodeWorkspace, extensionName)
+        new VsCodeConfig(vscodeWorkspace, extensionName.toLowerCase())
     ).singleton(),
 
     // logging options
@@ -110,83 +108,23 @@ export async function activate(context: ExtensionContext) {
         )
     ).singleton(),
 
-    // providers
-    providerRegistry: asFunction(
-      logger => new ProviderRegistry(
-        logger.child({ namespace: 'provider registry' })
-      )
-    ).singleton(),
   };
 
   // register the map
   container.register(containerMap);
 
-  // start up stuff
-  const { version } = require('../package.json');
+  // generate the provider registry async
+  const { subscriptions, logger } = container.cradle;
+  const providerRegistry = await createProviderRegistry(
+    container,
+    subscriptions,
+    logger.child({ namespace: 'provider registry' })
+  )
 
-  // invoke commands (todo move to extension class)
-  container.resolve('iconCommands');
-  container.resolve('suggestionCommands');
+  // add the registry in to the container
+  container.register({
+    providerRegistry: asValue(providerRegistry)
+  });
 
-  const {
-    logger,
-    loggingOptions,
-    textEditorEvents,
-  } = container.cradle;
-
-  // log general start up info
-  logger.info('version: %s', version);
-  logger.info('log level: %s', loggingOptions.level);
-  logger.info('log path: %s', context.logPath);
-
-  // add providers to the providerRegistry
-  await registerProviders(container)
-    .then(() => {
-      // show icons in active text editor if versionLens.providerActive
-      textEditorEvents.onDidChangeActiveTextEditor(window.activeTextEditor);
-    });
-}
-
-async function registerProviders(container: AwilixContainer<IContainerMap>): Promise<any> {
-
-  const { providerRegistry, subscriptions, logger } = container.cradle;
-
-  const providerNames = providerRegistry.providerNames;
-
-  logger.debug('Registering providers %o', providerNames.join(', '));
-
-  const promised = providerNames.map(
-    providerName => {
-      return import(`infrastructure.providers/${providerName}/index`)
-        .then(module => {
-
-          logger.debug('Activating container scope for %s', providerName);
-
-          // create a container scope for the provider
-          const scopeContainer = container.createScope();
-          const provider = module.composition(scopeContainer);
-
-          // register the provider
-          providerRegistry.register(provider);
-
-          // register the command with vscode
-          const sub = languages.registerCodeLensProvider(
-            provider.config.options.selector,
-            provider
-          );
-
-          // give vscode the command disposable
-          subscriptions.push(sub);
-        })
-        .catch(error => {
-          logger.error(
-            'Could not register provider %s. Reason: %O',
-            providerName,
-            error,
-          );
-        });
-    }
-  );
-
-  return await Promise.all(promised);
+  return container;
 }

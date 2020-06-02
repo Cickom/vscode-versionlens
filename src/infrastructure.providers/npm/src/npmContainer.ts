@@ -14,7 +14,7 @@ import { PacoteClient } from './clients/pacoteClient';
 import { GitHubClient } from './clients/githubClient';
 import { createJsonClient } from 'infrastructure.clients';
 
-export function composition(
+export function configureContainer(
   container: AwilixContainer<INpmContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 

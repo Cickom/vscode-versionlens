@@ -12,7 +12,7 @@ import { DubVersionLensProvider } from './dubProvider'
 import { DubConfig } from './dubConfig';
 import { DubClient } from './dubClient';
 
-export function composition(
+export function configureContainer(
   container: AwilixContainer<IDubContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 

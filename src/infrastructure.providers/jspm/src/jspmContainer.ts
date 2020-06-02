@@ -16,7 +16,7 @@ import {
   GitHubOptions
 } from 'infrastructure.providers.npm';
 
-export function composition(
+export function configureContainer(
   container: AwilixContainer<IJspmContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
