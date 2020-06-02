@@ -34,14 +34,14 @@
   ],
   "main": "./dist/extension.bundle.js",
   "scripts": {
-    "pack": "webpack --config=./src/webpack.js --env.logging=false",
+    "pack": "webpack --config=./build/webpack.js --env.logging=false",
     "teardown": "npm run -s clean && rimraf ./node_modules && rm -f ./package-lock.json",
     "vscode:prepublish": "npm run -s pack -- --mode=development",
     "watch": "node ./node_modules/vscode/bin/compile -watch -p ./",
     "clean": "rimraf ./out ./dist",
     "precompile": "npm run -s clean",
     "compile": "npm run -s pack -- --mode=development",
-    "compile:debug": "tsc -p ./src/tsconfig.src.json",
+    "compile:debug": "tsc -p ./build/tsconfig.src.json",
     "pretest": "npm run -s clean && npm run pack -- --env.test=true --mode=development",
     "test": "node ./test/ci.runner.js"
   },

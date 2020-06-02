@@ -6,6 +6,6 @@
     "noUnusedParameters": false,
   },
   "include": [
-    "infrastructure.providers/**/index.ts"
+    "../src/infrastructure.providers/**/index.ts"
   ]
 }

@@ -1,25 +1,30 @@
 const fs = require('fs');
 const path = require('path');
 
+const buildPath = __dirname;
+const projectPath = path.resolve(buildPath, '..');
+const sourcePath = path.resolve(projectPath, 'src');
+const testPath = path.resolve(projectPath, 'test');
+const distPath = path.resolve(projectPath, 'dist');
+
 module.exports = function (env, argv) {
 
   const logging = env && env.logging == 'true'
   const test = env && env.test == 'true'
 
-  const devConfigFile = './tsconfig.src.json'
-  const testConfigFile = '../test/tsconfig.test.json'
-
   const entry = test ?
-    path.resolve(__dirname, '../test/runner.ts') :
-    path.resolve(__dirname, './activate.ts');
+    path.resolve(testPath, 'runner.ts') :
+    path.resolve(sourcePath, 'activate.ts');
 
-  const tsconfigFile = path.resolve(
-    __dirname,
-    test ? testConfigFile : devConfigFile
-  );
+  const tsconfigFile = test ?
+    path.resolve(buildPath, 'tsconfig.test.json') :
+    path.resolve(buildPath, 'tsconfig.src.json');
+
+  const outputFile = test ?
+    'extension.test.js' :
+    'extension.bundle.js'
 
   console.log("[info] " + tsconfigFile)
-  const outputFile = test ? 'extension.test.js' : 'extension.bundle.js'
 
   return {
 
@@ -54,7 +59,7 @@ module.exports = function (env, argv) {
     devtool: 'source-map',
 
     output: {
-      path: path.resolve(__dirname, '../dist'),
+      path: distPath,
       filename: outputFile,
       libraryTarget: "commonjs2",
       devtoolModuleFilenameTemplate: "../[resource-path]",
@@ -83,13 +88,13 @@ module.exports = function (env, argv) {
       `${relativePath}.` :
       relativePath;
 
-    getDirectories(relativePath)
+    getDirectories(path.resolve(sourcePath, relativePath))
       .sort()
       .map(areaPath => ({ areaName: path.basename(areaPath), areaPath }))
       .forEach(
         area => {
           const areaFullName = `${areaPrefix}${area.areaName}`;
-          const areaFullPath = path.resolve(__dirname, relativePath, area.areaPath);
+          const areaFullPath = path.resolve(sourcePath, relativePath, area.areaPath);
           const indexTestPath = path.resolve(areaFullPath, 'index.test.ts');
 
           areaAliases[areaFullName] = areaFullPath;
@@ -124,15 +129,14 @@ module.exports = function (env, argv) {
   }
 
   function getNodeModulesNames() {
-    return getDirectories('../node_modules')
+    return getDirectories(path.resolve(projectPath, 'node_modules'))
   }
 
-  function getDirectories(relativePath) {
-    const resolvedPath = path.resolve(__dirname, relativePath)
-    log(`[debug] getDirectories ${relativePath}`)
-    return fs.readdirSync(resolvedPath).filter(
+  function getDirectories(absolutePath) {
+    log(`[debug] getDirectories ${absolutePath}`)
+    return fs.readdirSync(absolutePath).filter(
       function (file) {
-        return fs.statSync(resolvedPath + '/' + file).isDirectory();
+        return fs.statSync(absolutePath + '/' + file).isDirectory();
       }
     );
   }
