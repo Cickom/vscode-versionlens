@@ -19,7 +19,7 @@ export class ProcessClient extends AbstractCachedRequest<string, string>
   constructor(processOpts: ICachingOptions, processLogger: ILogger) {
     super(processOpts);
     this.logger = processLogger;
-    this.ps = require('@npmcli/promise-spawn');
+    this.ps = require('@npmcli/promise-spawn')
   }
 
   async request(

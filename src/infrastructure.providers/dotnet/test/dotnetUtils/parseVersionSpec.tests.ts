@@ -1,4 +1,4 @@
-import { parseVersionSpec } from 'infrastructure.providers/dotnet';
+import { parseVersionSpec } from 'infrastructure.providers.dotnet';
 
 const assert = require('assert');
 

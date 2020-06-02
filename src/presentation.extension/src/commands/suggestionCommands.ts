@@ -7,7 +7,6 @@ import { PackageSourceTypes } from 'core.packages';
 import { VersionLens } from 'presentation.lenses';
 import { CommandHelpers } from 'presentation.extension';
 
-import { VersionLensExtension } from "../versionLensExtension";
 import { VersionLensState } from '../versionLensState';
 import { SuggestionCommandContributions } from '../definitions/eSuggestionCommandContributions';
 
@@ -15,13 +14,10 @@ export class SuggestionCommands {
 
   state: VersionLensState;
 
-  extension: VersionLensExtension;
-
   logger: ILogger;
 
-  constructor(extension: VersionLensExtension, logger: ILogger) {
-    this.extension = extension
-    this.state = extension.state;
+  constructor(state: VersionLensState, logger: ILogger) {
+    this.state = state;
     this.logger = logger;
   }
 
@@ -60,13 +56,13 @@ export class SuggestionCommands {
 }
 
 export function registerSuggestionCommands(
-  extension: VersionLensExtension,
+  state: VersionLensState,
   subscriptions: Array<VsCodeTypes.Disposable>,
   logger: ILogger
 ): SuggestionCommands {
 
   // create the dependency
-  const suggestionCommands = new SuggestionCommands(extension, logger);
+  const suggestionCommands = new SuggestionCommands(state, logger);
 
   // register commands with vscode
   subscriptions.push(

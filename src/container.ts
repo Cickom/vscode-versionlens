@@ -1,7 +1,5 @@
-// design-time references
 import * as VsCodeTypes from 'vscode';
 
-// compiled run-time references
 import { ILogger, LoggingOptions } from 'core.logging';
 import { HttpOptions, CachingOptions } from 'core.clients';
 
@@ -10,7 +8,6 @@ import { IVsCodeWorkspace } from 'infrastructure.configuration';
 
 import {
   VersionLensExtension,
-  VersionLensState,
   TextEditorEvents,
   IconCommands,
   SuggestionCommands
@@ -38,7 +35,6 @@ export interface IContainerMap {
   // extension
   extensionName: string,
   extension: VersionLensExtension,
-  extensionState: VersionLensState,
 
   // commands
   subscriptions: Array<VsCodeTypes.Disposable>,

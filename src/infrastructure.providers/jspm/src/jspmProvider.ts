@@ -7,7 +7,7 @@ import { RequestFactory, IPackageClient } from 'core.packages';
 
 import { VersionLensFetchResponse } from 'presentation.providers';
 
-import { NpmVersionLensProvider } from 'infrastructure.providers/npm';
+import { NpmVersionLensProvider } from 'infrastructure.providers.npm';
 
 import { extractPackageDependenciesFromJson } from './jspmPackageParser';
 import { JspmConfig } from './jspmConfig';

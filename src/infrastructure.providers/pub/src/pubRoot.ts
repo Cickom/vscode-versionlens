@@ -1,7 +1,5 @@
-// design-time references
-import { AwilixContainer } from 'awilix';
+import { AwilixContainer, asFunction } from 'awilix';
 
-// run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
@@ -13,14 +11,11 @@ import { PubConfig } from './pubConfig';
 import { PubClient } from './pubClient';
 import { createJsonClient } from 'infrastructure.clients';
 
-// run-time file system imports
-const { asFunction } = require('awilix');
-
 export function composition(
   container: AwilixContainer<IPubContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  const containerMap: IPubContainerMap = {
+  const containerMap = {
 
     // options
     pubCachingOpts: asFunction(
@@ -77,7 +72,7 @@ export function composition(
     ).singleton(),
   };
 
-  container.register(<any>containerMap)
+  container.register(containerMap)
 
   return container.cradle.pubProvider;
 }

@@ -6,7 +6,7 @@ import {
   NpmConfig,
   GitHubOptions,
   GitHubClient
-} from 'infrastructure.providers/npm'
+} from 'infrastructure.providers.npm'
 
 import {
   ClientResponseSource,

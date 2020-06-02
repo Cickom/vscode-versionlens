@@ -1,8 +1,18 @@
-// design-time references
-import * as VsCodeTypes from 'vscode';
-import { AwilixContainer } from 'awilix';
+import {
+  workspace,
+  window,
+  ExtensionContext,
+  languages
+} from 'vscode';
 
-// run-time compiled references
+import {
+  createContainer,
+  asValue,
+  asFunction,
+  InjectionMode,
+  AwilixContainer
+} from 'awilix';
+
 import { LoggingOptions } from 'core.logging';
 import { HttpOptions, CachingOptions } from 'core.clients';
 
@@ -13,34 +23,19 @@ import {
   VersionLensExtension,
   registerIconCommands,
   registerSuggestionCommands,
-  VersionLensState,
   TextEditorEvents
 } from 'presentation.extension';
 import { ProviderRegistry } from 'presentation.providers';
 
 import { IContainerMap } from './container';
 
-// run-time file system imports
-const {
-  workspace,
-  window,
-  languages: { registerCodeLensProvider }
-} = require('vscode');
-
-const {
-  createContainer,
-  asValue,
-  asFunction,
-  InjectionMode
-} = require('awilix');
-
-export async function composition(context: VsCodeTypes.ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 
   const container: AwilixContainer<IContainerMap> = createContainer({
     injectionMode: InjectionMode.CLASSIC
   });
 
-  const containerMap: IContainerMap = {
+  const containerMap = {
 
     extensionName: asValue(VersionLensExtension.extensionName.toLowerCase()),
 
@@ -82,17 +77,13 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
       rootConfig => new VersionLensExtension(rootConfig)
     ).singleton(),
 
-    extensionState: asFunction(
-      extension => new VersionLensState(extension)
-    ).singleton(),
-
     // commands
     subscriptions: asValue(context.subscriptions),
 
     iconCommands: asFunction(
-      (extensionState, providerRegistry, subscriptions, outputChannel, logger) =>
+      (extension, providerRegistry, subscriptions, outputChannel, logger) =>
         registerIconCommands(
-          extensionState,
+          extension.state,
           providerRegistry,
           subscriptions,
           outputChannel,
@@ -103,7 +94,7 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
     suggestionCommands: asFunction(
       (extension, subscriptions, logger) =>
         registerSuggestionCommands(
-          extension,
+          extension.state,
           subscriptions,
           logger.child({ namespace: 'suggestion commands' })
         )
@@ -111,9 +102,9 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
 
     // events
     textEditorEvents: asFunction(
-      (extensionState, providerRegistry, logger) =>
+      (extension, providerRegistry, logger) =>
         new TextEditorEvents(
-          extensionState,
+          extension.state,
           providerRegistry,
           logger.child({ namespace: 'text editor' })
         )
@@ -128,7 +119,7 @@ export async function composition(context: VsCodeTypes.ExtensionContext) {
   };
 
   // register the map
-  container.register(<any>containerMap);
+  container.register(containerMap);
 
   // start up stuff
   const { version } = require('../package.json');
@@ -179,7 +170,7 @@ async function registerProviders(container: AwilixContainer<IContainerMap>): Pro
           providerRegistry.register(provider);
 
           // register the command with vscode
-          const sub = registerCodeLensProvider(
+          const sub = languages.registerCodeLensProvider(
             provider.config.options.selector,
             provider
           );

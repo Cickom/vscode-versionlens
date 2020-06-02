@@ -1,4 +1,3 @@
-// compiled run-time references
 import { ICachingOptions, IHttpOptions, IJsonHttpClient } from 'core.clients';
 
 import { JspmConfig } from '../jspmConfig';
@@ -8,7 +7,7 @@ import {
   PacoteClient,
   GitHubClient,
   NpmPackageClient
-} from 'infrastructure.providers/npm';
+} from 'infrastructure.providers.npm';
 
 export interface IJspmContainerMap {
 

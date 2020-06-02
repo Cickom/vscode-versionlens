@@ -12,7 +12,7 @@
         "--extensionDevelopmentPath=${workspaceFolder}"
       ],
       "outFiles": [
-        "${workspaceFolder}/out/**/*.js"
+        "${workspaceFolder}/dist/extension.bundle.js"
       ],
       "stopOnEntry": false,
       "sourceMaps": true,
@@ -33,14 +33,14 @@
       "args": [
         "--disable-extensions",
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionTestsPath=${workspaceFolder}/out/test",
+        "--extensionTestsPath=${workspaceFolder}/dist/extension.test.js",
       ],
       "outFiles": [
-        "${workspaceFolder}/out/test/**/*.js"
+        "${workspaceFolder}/dist/**/*.js"
       ],
       "stopOnEntry": false,
       "sourceMaps": true,
-      "preLaunchTask": "compile:test",
+      "preLaunchTask": "pretest",
       "internalConsoleOptions": "openOnSessionStart",
       "skipFiles": [
         "<node_internals>/**"

@@ -1,4 +1,3 @@
-// compiled run-time references
 import { ICachingOptions, IHttpOptions, IJsonHttpClient } from 'core.clients';
 
 import { PubConfig } from '../pubConfig';

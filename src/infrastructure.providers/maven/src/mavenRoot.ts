@@ -1,7 +1,5 @@
-// design-time references
-import { AwilixContainer } from 'awilix';
+import { AwilixContainer, asFunction } from 'awilix';
 
-// run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
@@ -14,14 +12,11 @@ import { MvnCli } from './clients/mvnCli';
 import { MavenClient } from './clients/mavenClient';
 import { createHttpClient, ProcessClient } from 'infrastructure.clients';
 
-// run-time file system imports
-const { asFunction } = require('awilix');
-
 export function composition(
   container: AwilixContainer<IMavenContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  const containerMap: IMavenContainerMap = {
+  const containerMap = {
 
     // options
     mavenCachingOpts: asFunction(
@@ -101,7 +96,7 @@ export function composition(
     ).singleton(),
   };
 
-  container.register(<any>containerMap);
+  container.register(containerMap);
 
   return container.cradle.mavenProvider;
 }

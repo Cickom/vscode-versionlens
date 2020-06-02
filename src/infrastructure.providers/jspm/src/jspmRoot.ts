@@ -1,7 +1,5 @@
-// design-time references
-import { AwilixContainer } from 'awilix';
+import { AwilixContainer, asFunction } from 'awilix';
 
-// run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
 import { IProviderConfig, AbstractVersionLensProvider } from 'presentation.providers';
@@ -10,16 +8,19 @@ import { JspmConfig } from './jspmConfig';
 import { JspmVersionLensProvider } from './jspmProvider'
 import { IJspmContainerMap } from './definitions/iJspmContainerMap';
 import { createJsonClient } from 'infrastructure.clients';
-import { NpmContributions, PacoteClient, NpmPackageClient, GitHubClient, GitHubOptions } from 'infrastructure.providers/npm';
-
-// run-time file system imports
-const { asFunction } = require('awilix');
+import {
+  NpmContributions,
+  PacoteClient,
+  NpmPackageClient,
+  GitHubClient,
+  GitHubOptions
+} from 'infrastructure.providers.npm';
 
 export function composition(
   container: AwilixContainer<IJspmContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  const containerMap: IJspmContainerMap = {
+  const containerMap = {
 
     // options
     jspmCachingOpts: asFunction(
@@ -103,7 +104,7 @@ export function composition(
 
   };
 
-  container.register(<any>containerMap);
+  container.register(containerMap);
 
   return container.cradle.jspmProvider;
 }

@@ -18,7 +18,7 @@ import {
   DotNetCli,
   INugetOptions,
   NugetOptions
-} from 'infrastructure.providers/dotnet';
+} from 'infrastructure.providers.dotnet';
 
 import { ProcessClient } from 'infrastructure.clients';
 

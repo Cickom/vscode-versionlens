@@ -1,5 +1,5 @@
 import { ICachingOptions, IHttpOptions } from 'core.clients';
-import { NpmConfig, GitHubOptions } from 'infrastructure.providers/npm';
+import { NpmConfig, GitHubOptions } from 'infrastructure.providers.npm';
 import { VersionLensExtension } from 'presentation.extension';
 
 export class JspmConfig extends NpmConfig {

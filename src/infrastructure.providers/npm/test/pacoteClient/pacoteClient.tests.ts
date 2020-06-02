@@ -15,7 +15,7 @@ import {
   PacoteClient,
   GitHubOptions,
   IPacote
-} from 'infrastructure.providers/npm'
+} from 'infrastructure.providers.npm'
 
 import { VersionLensExtension } from 'presentation.extension';
 

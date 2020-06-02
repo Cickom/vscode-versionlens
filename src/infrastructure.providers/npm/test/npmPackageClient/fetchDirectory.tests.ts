@@ -4,9 +4,9 @@ import {
   NpmConfig,
   NpmPackageClient,
   GitHubClient
-} from 'infrastructure.providers/npm'
+} from 'infrastructure.providers.npm'
 
-import { PacoteClient } from 'infrastructure.providers/npm';
+import { PacoteClient } from 'infrastructure.providers.npm';
 
 const { mock, instance } = require('ts-mockito');
 

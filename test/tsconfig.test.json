@@ -1,14 +1,9 @@
 {
   "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "outFile": "../out/test/index.js",
-    "lib": [
-      "ES2019"
-    ],
-    "allowJs": true
-  },
-  "files": [
-    "loader.js",
-    "runner.js",
+  "exclude": [
+    "../src/root.ts"
+  ],
+  "include": [
+    "../src/infrastructure.providers/**/index.ts",
   ]
 }

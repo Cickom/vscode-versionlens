@@ -6,5 +6,5 @@ export * from 'test.core.packages'
 export * from 'test.infrastructure.clients'
 export * from 'test.infrastructure.configuration'
 
-export * from 'test.infrastructure.providers/dotnet'
-export * from 'test.infrastructure.providers/npm'
+export * from 'test.infrastructure.providers.dotnet'
+export * from 'test.infrastructure.providers.npm'

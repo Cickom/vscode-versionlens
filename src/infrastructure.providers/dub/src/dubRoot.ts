@@ -1,7 +1,5 @@
-// design-time references
-import { AwilixContainer } from 'awilix';
+import { AwilixContainer, asFunction } from 'awilix';
 
-// run-time compiled references
 import { CachingOptions, HttpOptions } from 'core.clients';
 
 import { createJsonClient } from 'infrastructure.clients';
@@ -14,15 +12,11 @@ import { DubVersionLensProvider } from './dubProvider'
 import { DubConfig } from './dubConfig';
 import { DubClient } from './dubClient';
 
-
-// run-time file system imports
-const { asFunction } = require('awilix');
-
 export function composition(
   container: AwilixContainer<IDubContainerMap>
 ): AbstractVersionLensProvider<IProviderConfig> {
 
-  const containerMap: IDubContainerMap = {
+  const containerMap = {
 
     // options
     dubCachingOpts: asFunction(
@@ -79,7 +73,7 @@ export function composition(
     ).singleton(),
   };
 
-  container.register(<any>containerMap)
+  container.register(containerMap)
 
   return container.cradle.dubProvider;
 }

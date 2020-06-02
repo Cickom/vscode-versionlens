@@ -9,7 +9,7 @@ import {
   HttpClientRequestMethods
 } from 'core.clients';
 
-import { NuGetResourceClient } from 'infrastructure.providers/dotnet';
+import { NuGetResourceClient } from 'infrastructure.providers.dotnet';
 
 import Fixtures from './fixtures/nugetResources'
 

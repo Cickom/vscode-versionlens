@@ -3,7 +3,7 @@ import { LoggerStub } from 'test.core.logging';
 
 import { ILogger } from 'core.logging';
 
-import { NpmConfig, IPacote, PacoteClient } from 'infrastructure.providers/npm'
+import { NpmConfig, IPacote, PacoteClient } from 'infrastructure.providers.npm'
 
 import Fixtures from './pacoteClient.fixtures'
 import { PacoteStub } from '../stubs/pacoteStub';

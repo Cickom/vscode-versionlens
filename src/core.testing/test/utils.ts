@@ -1,13 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 
-// export interface TestFixture {
-//   path: string;
-//   basename: string;
-//   content: string;
-// }
-
-export const testPath = path.join(__dirname, '../..');
+// expects test bundle to be at ./dist/[filename].js
+export const testPath = path.join(__dirname, '..');
 
 export async function delay(delay) {
   return new Promise((resolve, reject) => {

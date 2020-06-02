@@ -1,4 +1,4 @@
-import { IPacote } from "infrastructure.providers/npm";
+import { IPacote } from "infrastructure.providers.npm";
 
 export class PacoteStub implements IPacote {
 
