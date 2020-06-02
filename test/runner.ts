@@ -1,7 +1,5 @@
 import * as Tests from '../src/test.all'
-import { runTests } from 'vscode-test';
 
-const path = require('path');
 const tty = require('tty');
 const Mocha = require("mocha");
 require('mocha-ui-esm');
@@ -29,25 +27,6 @@ export function run(testRoot, onComplete) {
       onComplete(null, failures);
     else
       onComplete(null, 0);
-  });
-
-}
-
-if (process.env.VSCODE_LAUNCHER != "1") {
-
-  console.log("[info] Running tests from " + __dirname)
-
-  // tell vscode where our compiled test file lives
-  runTests({
-    version: "insiders",
-    extensionDevelopmentPath: path.resolve(__dirname, '..'),
-    extensionTestsPath: path.resolve(__dirname, '../dist/extension.test.js'),
-    launchArgs: [
-      __dirname
-    ]
-  }).catch(error => {
-    console.error('Something went wrong!', error);
-    process.exit(1);
   });
 
 }

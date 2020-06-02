@@ -43,7 +43,7 @@
     "compile": "npm run -s pack -- --mode=development",
     "compile:debug": "tsc -p ./src/tsconfig.src.json",
     "pretest": "npm run -s clean && npm run pack -- --env.test=true --mode=development",
-    "test": "node ./dist/extension.test.js"
+    "test": "node ./test/ci.runner.js"
   },
   "devDependencies": {
     "@types/node": "^12",
